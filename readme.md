@@ -65,7 +65,7 @@ Essa avaliação usa regras e uma pontuação explícita; ainda não aprende a p
 
 ## API REST e cliente Rust
 
-Instale as dependências e treine os modelos de demonstração na raiz do projeto:
+Instale as dependências e treine os modelos de demonstração na raiz do projeto. **Terminal 1:** inicie o servidor e deixe esse terminal aberto:
 
 ```powershell
 .\.venv\Scripts\python -m pip install -r requirements.txt
@@ -74,7 +74,7 @@ Instale as dependências e treine os modelos de demonstração na raiz do projet
 .\.venv\Scripts\python -m uvicorn opendecision.api:app --reload
 ```
 
-Com o servidor aberto, consulte `http://127.0.0.1:8000/docs` para experimentar os endpoints e ver o contrato OpenAPI.
+Com o servidor aberto, consulte `http://127.0.0.1:8000/docs` para experimentar os endpoints e ver o contrato OpenAPI. No Terminal 2, `Invoke-RestMethod http://127.0.0.1:8000/health` deve retornar `status: ok` antes de rodar o cliente.
 
 | Método | Rota | Uso |
 | --- | --- | --- |
@@ -83,7 +83,7 @@ Com o servidor aberto, consulte `http://127.0.0.1:8000/docs` para experimentar o
 | `POST` | `/v1/actions/decide` | Escolhe a próxima ação para `pesquisa` ou `passagens`. |
 | `POST` | `/v1/flights/evaluate` | Aplica critérios e ordena ofertas informadas no corpo JSON. |
 
-Em outro terminal, com [Rust instalado](https://rust-lang.org/tools/install/), execute o cliente:
+**Terminal 2:** com [Rust instalado](https://rust-lang.org/tools/install/), execute o cliente enquanto o servidor do Terminal 1 continua ativo:
 
 ```powershell
 cargo run --manifest-path clients/rust/Cargo.toml -- flights dados/viagem_exemplo.json

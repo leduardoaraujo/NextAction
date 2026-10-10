@@ -107,7 +107,18 @@ fn post<Request: Serialize, Response: DeserializeOwned>(
     body: &Request,
 ) -> Result<Response, Box<dyn Error>> {
     let url = format!("{}{path}", base_url.trim_end_matches('/'));
-    let response = client.post(url).json(body).send()?;
+    let response = match client.post(url).json(body).send() {
+        Ok(response) => response,
+        Err(error) if error.is_connect() || error.is_timeout() => {
+            return Err(format!(
+                "Não foi possível conectar à API em {base_url}. Inicie o servidor em outro terminal com \
+                 '.\\.venv\\Scripts\\python -m uvicorn opendecision.api:app --host 127.0.0.1 --port 8000' \
+                 ou ajuste OPENDECISION_API_URL. Detalhe: {error}"
+            )
+            .into());
+        }
+        Err(error) => return Err(error.into()),
+    };
     let status = response.status();
     if !status.is_success() {
         return Err(format!("API retornou {status}: {}", response.text()?).into());
