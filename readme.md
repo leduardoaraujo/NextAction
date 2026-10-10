@@ -7,7 +7,9 @@ Primeiro passo de um modelo de decisão inspirado na **interface** do Jev: receb
 - `opendecision/dados.py`: lê e valida os exemplos em CSV.
 - `opendecision/modelo.py`: treina, avalia e usa o classificador.
 - `opendecision/passagens.py`: aplica restrições e ordena ofertas fictícias.
+- `opendecision/api.py` e `api_schemas.py`: expõem contratos HTTP e validação JSON.
 - `opendecision/cli.py`: recebe os comandos e imprime o resultado.
+- `clients/rust/`: cliente de terminal em Rust que consome a API.
 - `main.py`: entrada mantida para os comandos existentes; `python -m opendecision` também funciona.
 - `dados/`: exemplos rotulados; `cenarios/`: descrição dos cenários.
 
@@ -60,6 +62,42 @@ Para experimentar uma decisão com orçamento, bagagem e preferência por preço
 ```
 
 Essa avaliação usa regras e uma pontuação explícita; ainda não aprende a preferência entre voos. Veja os detalhes e limites no cenário.
+
+## API REST e cliente Rust
+
+Instale as dependências e treine os modelos de demonstração na raiz do projeto:
+
+```powershell
+.\.venv\Scripts\python -m pip install -r requirements.txt
+.\.venv\Scripts\python -m opendecision treinar
+.\.venv\Scripts\python -m opendecision treinar --dados dados/passagens.csv --modelo modelos/passagens.joblib
+.\.venv\Scripts\python -m uvicorn opendecision.api:app --reload
+```
+
+Com o servidor aberto, consulte `http://127.0.0.1:8000/docs` para experimentar os endpoints e ver o contrato OpenAPI.
+
+| Método | Rota | Uso |
+| --- | --- | --- |
+| `GET` | `/health` | Verifica se o servidor responde. |
+| `GET` | `/v1/models` | Mostra quais modelos locais foram treinados. |
+| `POST` | `/v1/actions/decide` | Escolhe a próxima ação para `pesquisa` ou `passagens`. |
+| `POST` | `/v1/flights/evaluate` | Aplica critérios e ordena ofertas informadas no corpo JSON. |
+
+Em outro terminal, com [Rust instalado](https://rust-lang.org/tools/install/), execute o cliente:
+
+```powershell
+cargo run --manifest-path clients/rust/Cargo.toml -- flights dados/viagem_exemplo.json
+cargo run --manifest-path clients/rust/Cargo.toml -- action passagens "Tenho origem GRU destino REC e ainda não consultei voos"
+```
+
+O cliente usa `http://127.0.0.1:8000` por padrão. Defina `OPENDECISION_API_URL` para outro endereço. A API devolve `503` se o classificador solicitado ainda não foi treinado. A avaliação de ofertas usa os dados enviados; não pesquisa preços nem emite passagens.
+
+Para executar os testes Python:
+
+```powershell
+.\.venv\Scripts\python -m pip install -r requirements-dev.txt
+.\.venv\Scripts\python -m unittest discover -s tests -v
+```
 
 ## Referências
 
