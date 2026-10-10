@@ -1,0 +1,18 @@
+{
+  "pedido": {
+    "origem": "GRU",
+    "destino": "REC",
+    "data_ida": "2026-11-12",
+    "data_volta": "2026-11-19",
+    "passageiros": 1,
+    "orcamento_max": 1400,
+    "max_escalas": 1,
+    "bagagem_obrigatoria": true,
+    "pesos": {"preco": 0.5, "duracao": 0.3, "escalas": 0.2}
+  },
+  "ofertas": [
+    {"id": "voo_a", "preco_total": 1100, "duracao_min": 190, "escalas": 0, "bagagem_incluida": true},
+    {"id": "voo_b", "preco_total": 850, "duracao_min": 320, "escalas": 1, "bagagem_incluida": false},
+    {"id": "voo_c", "preco_total": 1250, "duracao_min": 165, "escalas": 0, "bagagem_incluida": true}
+  ]
+}

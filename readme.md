@@ -6,6 +6,7 @@ Primeiro passo de um modelo de decisão inspirado na **interface** do Jev: receb
 
 - `opendecision/dados.py`: lê e valida os exemplos em CSV.
 - `opendecision/modelo.py`: treina, avalia e usa o classificador.
+- `opendecision/passagens.py`: aplica restrições e ordena ofertas fictícias.
 - `opendecision/cli.py`: recebe os comandos e imprime o resultado.
 - `main.py`: entrada mantida para os comandos existentes; `python -m opendecision` também funciona.
 - `dados/`: exemplos rotulados; `cenarios/`: descrição dos cenários.
@@ -51,6 +52,14 @@ Veja [o cenário de passagens](cenarios/passagens.md) e os exemplos em `dados/pa
 ```powershell
 .\.venv\Scripts\python -m opendecision treinar --dados dados/passagens.csv --modelo modelos/passagens.joblib
 ```
+
+Para experimentar uma decisão com orçamento, bagagem e preferência por preço, duração e escalas:
+
+```powershell
+.\.venv\Scripts\python -m opendecision avaliar-passagens dados/viagem_exemplo.json
+```
+
+Essa avaliação usa regras e uma pontuação explícita; ainda não aprende a preferência entre voos. Veja os detalhes e limites no cenário.
 
 ## Referências
 
