@@ -36,6 +36,14 @@ Os 24 exemplos incluídos são somente uma demonstração. A acurácia sobre pou
 
 Próximos passos: adaptar ações e estados ao seu agente, montar avaliação confiável, adicionar ações permitidas por contexto e expor a decisão por API.
 
+## Cenário de passagens aéreas
+
+Veja [o cenário de passagens](cenarios/passagens.md) e os exemplos em `dados/passagens.csv`. Para treinar esse modelo separado:
+
+```powershell
+.\.venv\Scripts\python main.py treinar --dados dados/passagens.csv --modelo modelos/passagens.joblib
+```
+
 ## Referências
 
 - [Apresentação oficial do Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev)
