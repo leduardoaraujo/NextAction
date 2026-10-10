@@ -24,8 +24,8 @@ O programa atual apenas **sugere** uma ação. Mesmo que o modelo sugira `buscar
 Na raiz do projeto:
 
 ```powershell
-.\.venv\Scripts\python main.py treinar --dados dados/passagens.csv --modelo modelos/passagens.joblib
-.\.venv\Scripts\python main.py decidir "Tenho origem GRU destino REC ida 12/11 volta 19/11 e um adulto mas ainda não consultei voos" --modelo modelos/passagens.joblib
+.\.venv\Scripts\python -m opendecision treinar --dados dados/passagens.csv --modelo modelos/passagens.joblib
+.\.venv\Scripts\python -m opendecision decidir "Tenho origem GRU destino REC ida 12/11 volta 19/11 e um adulto mas ainda não consultei voos" --modelo modelos/passagens.joblib
 ```
 
 Os exemplos são sintéticos e pequenos. Para melhorar o modelo, substitua-os por estados de atendimento revisados e reserve casos reais mais recentes para avaliar erros. Só depois defina um limiar de revisão com base nesses dados. O número exibido como probabilidade ainda não passou por calibração.

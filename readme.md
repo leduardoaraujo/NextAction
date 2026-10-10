@@ -2,6 +2,14 @@
 
 Primeiro passo de um modelo de decisão inspirado na **interface** do Jev: receber um estado, escolher uma ação definida e devolver probabilidades. Este protótipo treina um classificador de texto local. Ele não reproduz a arquitetura nem o treinamento RLCD do Jev.
 
+## Estrutura
+
+- `opendecision/dados.py`: lê e valida os exemplos em CSV.
+- `opendecision/modelo.py`: treina, avalia e usa o classificador.
+- `opendecision/cli.py`: recebe os comandos e imprime o resultado.
+- `main.py`: entrada mantida para os comandos existentes; `python -m opendecision` também funciona.
+- `dados/`: exemplos rotulados; `cenarios/`: descrição dos cenários.
+
 ## Passo 1: definir a decisão
 
 O exemplo responde: **qual deve ser a próxima ação de um agente de pesquisa?** As ações possíveis são `pesquisar`, `perguntar` e `responder`. O modelo escolhe uma delas; o código que executa a ação fica separado.
@@ -17,7 +25,7 @@ No PowerShell:
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\python -m pip install -r requirements.txt
-.\.venv\Scripts\python main.py treinar
+.\.venv\Scripts\python -m opendecision treinar
 ```
 
 O texto é transformado em características TF-IDF e usado para treinar uma regressão logística. O comando salva o modelo em `modelos/decisor.joblib`.
@@ -25,7 +33,7 @@ O texto é transformado em características TF-IDF e usado para treinar uma regr
 ## Passo 4: pedir uma decisão
 
 ```powershell
-.\.venv\Scripts\python main.py decidir "Preciso saber a cotação de hoje e ainda não consultei nenhuma fonte"
+.\.venv\Scripts\python -m opendecision decidir "Preciso saber a cotação de hoje e ainda não consultei nenhuma fonte"
 ```
 
 A saída traz a ação escolhida, a probabilidade estimada de cada ação e `pedir_revisao`. Por padrão, `pedir_revisao` é verdadeiro quando a maior probabilidade fica abaixo de `0.70`. Ajuste com `--limiar 0.80`.
@@ -41,7 +49,7 @@ Próximos passos: adaptar ações e estados ao seu agente, montar avaliação co
 Veja [o cenário de passagens](cenarios/passagens.md) e os exemplos em `dados/passagens.csv`. Para treinar esse modelo separado:
 
 ```powershell
-.\.venv\Scripts\python main.py treinar --dados dados/passagens.csv --modelo modelos/passagens.joblib
+.\.venv\Scripts\python -m opendecision treinar --dados dados/passagens.csv --modelo modelos/passagens.joblib
 ```
 
 ## Referências
