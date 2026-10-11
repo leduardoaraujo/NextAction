@@ -5,11 +5,12 @@ from pathlib import Path
 
 import numpy as np
 from sklearn.metrics import confusion_matrix, log_loss, precision_recall_fscore_support
-from sklearn.model_selection import StratifiedKFold, cross_val_predict
+from sklearn.model_selection import StratifiedKFold
 
 from .data import load_examples
 from .i18n import LocalizedError, t
-from .model import new_model
+from .model import fit_pipeline, new_model
+from .progress import stage
 
 THRESHOLDS = (0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
 
@@ -41,23 +42,30 @@ def evaluate(
 
     folds = min(5, min(Counter(actions).values()))
     splitter = StratifiedKFold(n_splits=folds, shuffle=True, random_state=42)
-    probabilities = cross_val_predict(
-        new_model(min_df), states, actions, cv=splitter, method="predict_proba"
-    )
+    classes = sorted(set(actions))
+    probabilities = np.zeros((len(states), len(classes)))
+    with stage("cross_validation", total=folds) as progress:
+        for train_index, test_index in splitter.split(states, actions):
+            model = new_model(min_df).fit([states[i] for i in train_index], [actions[i] for i in train_index])
+            columns = [classes.index(label) for label in model.classes_]
+            probabilities[np.ix_(test_index, columns)] = model.predict_proba([states[i] for i in test_index])
+            progress.advance()
     majority = Counter(actions).most_common(1)[0][0]
     return {
         "method": t("method_cross_validation", lang, folds=folds),
-        **metrics(actions, probabilities, sorted(set(actions)), majority, lang),
+        **metrics(actions, probabilities, classes, majority, lang),
     }
 
 
 def _evaluate_split(train_x, train_y, test_x, test_y, method: str, min_df: int, lang) -> dict:
     if len(set(train_y)) < 2:
         raise LocalizedError("train_needs_two_actions")
-    model = new_model(min_df).fit(train_x, train_y)
+    model = fit_pipeline(new_model(min_df), train_x, train_y)
     majority = Counter(train_y).most_common(1)[0][0]
+    with stage("predict", total=len(test_x)):
+        probabilities = model.predict_proba(test_x)
     result = {"method": method, "train_examples": len(train_x)}
-    result.update(metrics(test_y, model.predict_proba(test_x), list(model.classes_), majority, lang))
+    result.update(metrics(test_y, probabilities, list(model.classes_), majority, lang))
     unseen = sorted(set(test_y) - set(model.classes_))
     if unseen:
         result["actions_missing_from_training"] = unseen

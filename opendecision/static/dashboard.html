@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenDecision Jobs</title>
+<style>
+  :root {
+    --bg: #f7f7f8; --card: #ffffff; --text: #1b1b1f; --muted: #6b6b76; --border: #e3e3e8;
+    --bar: #e9e9ef; --running: #2f6fed; --done: #1f9d55; --failed: #d64545; --stale: #b7791f;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111114; --card: #1a1a1f; --text: #ececf1; --muted: #9a9aa6; --border: #2a2a31;
+      --bar: #2a2a31; --running: #6d9bff; --done: #48c78e; --failed: #ff6b6b; --stale: #f0b429;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 16px; }
+  header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  h1 { font-size: 22px; margin: 0; }
+  .updated { color: var(--muted); font-size: 13px; }
+  .job { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+         padding: 14px 16px; margin-top: 12px; }
+  .row { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .name { font-weight: 600; }
+  .meta { color: var(--muted); font-size: 13px; }
+  .status { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+  .bar { height: 8px; background: var(--bar); border-radius: 99px; overflow: hidden; margin: 10px 0 6px; }
+  .fill { height: 100%; width: 0; border-radius: 99px; transition: width .4s ease; }
+  .indeterminate .fill { width: 30%; animation: slide 1.2s infinite ease-in-out; }
+  @keyframes slide { from { margin-left: -30%; } to { margin-left: 100%; } }
+  .error { color: var(--failed); font-size: 13px; margin-top: 4px; word-break: break-word; }
+  .empty { color: var(--muted); margin-top: 24px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1 id="title">Jobs</h1>
+    <span class="updated" id="updated"></span>
+  </header>
+  <div id="jobs"></div>
+</main>
+<script>
+  const pt = navigator.language.toLowerCase().startsWith("pt");
+  const text = pt
+    ? { title: "Jobs do OpenDecision", updated: "Atualizado às", empty: "Nenhum job ainda. Rode, por exemplo, `opendecision train agent`.", eta: "restante", offline: "API indisponível" }
+    : { title: "OpenDecision jobs", updated: "Updated at", empty: "No jobs yet. Run, for example, `opendecision train agent`.", eta: "left", offline: "API unavailable" };
+  document.documentElement.lang = pt ? "pt-BR" : "en";
+  document.getElementById("title").textContent = text.title;
+  const colors = { running: "var(--running)", done: "var(--done)", failed: "var(--failed)", stale: "var(--stale)" };
+
+  function duration(seconds) {
+    if (!seconds) return "";
+    const m = Math.floor(seconds / 60), s = Math.round(seconds % 60);
+    return (m ? `${m}m ` : "") + `${s}s ${text.eta}`;
+  }
+
+  function card(job) {
+    const color = colors[job.status] || "var(--muted)";
+    const known = job.percent !== null && job.percent !== undefined;
+    const element = document.createElement("div");
+    element.className = "job";
+    element.innerHTML = `
+      <div class="row">
+        <span class="name"></span>
+        <span class="status" style="color:${color}"></span>
+      </div>
+      <div class="bar ${known || job.status !== "running" ? "" : "indeterminate"}">
+        <div class="fill" style="background:${color};width:${known ? job.percent : job.status === "done" ? 100 : 0}%"></div>
+      </div>
+      <div class="row meta">
+        <span class="stage"></span>
+        <span>${known ? job.percent.toFixed(0) + "%" : ""} ${job.status === "running" ? duration(job.eta_s) : ""}</span>
+      </div>`;
+    element.querySelector(".name").textContent = job.name;
+    element.querySelector(".status").textContent = job.status_label;
+    element.querySelector(".stage").textContent = [job.stage_label, job.total ? `${job.done}/${job.total}` : ""].filter(Boolean).join(" · ");
+    if (job.error) {
+      const error = document.createElement("div");
+      error.className = "error";
+      error.textContent = job.error;
+      element.appendChild(error);
+    }
+    return element;
+  }
+
+  async function refresh() {
+    const list = document.getElementById("jobs");
+    try {
+      const response = await fetch("/v1/jobs", { headers: { "Accept-Language": navigator.language } });
+      const { jobs } = await response.json();
+      list.replaceChildren(...(jobs.length ? jobs.map(card) : [Object.assign(document.createElement("p"), { className: "empty", textContent: text.empty })]));
+      document.getElementById("updated").textContent = `${text.updated} ${new Date().toLocaleTimeString()}`;
+    } catch {
+      document.getElementById("updated").textContent = text.offline;
+    }
+  }
+  refresh();
+  setInterval(refresh, 2000);
+</script>
+</body>
+</html>

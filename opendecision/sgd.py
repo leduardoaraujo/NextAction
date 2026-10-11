@@ -11,6 +11,7 @@ from collections import Counter
 from pathlib import Path
 
 from .i18n import LocalizedError
+from .progress import stage
 
 # Priority order when a turn has several acts.
 GENERIC_ACTIONS = {
@@ -82,10 +83,11 @@ def convert(
 
     counts = Counter()
     destination.parent.mkdir(parents=True, exist_ok=True)
-    with destination.open("w", encoding="utf-8", newline="") as output:
+    with destination.open("w", encoding="utf-8", newline="") as output, stage("import", total=len(files)) as progress:
         writer = csv.writer(output)
         writer.writerow(["state", "action", "dialogue"])
         for path in files:
+            progress.advance()
             for dialogue in json.loads(path.read_text(encoding="utf-8")):
                 if schema == "flights" and not any(s.startswith("Flights") for s in dialogue["services"]):
                     continue
