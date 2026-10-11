@@ -1,0 +1,101 @@
+state,action,utterance,family
+[blocked none] [context datasource_available last_error_none missing_none] || user: Mostre a receita mensal por região,data_query,Mostre a receita mensal por região,train/data_query/0
+[blocked none] [context datasource_available last_error_none missing_none] || user: Compare vendas deste mês com o anterior,data_query,Compare vendas deste mês com o anterior,train/data_query/1
+[blocked none] [context datasource_available last_error_none missing_none] || user: Qual foi o faturamento por produto em 2025?,data_query,Qual foi o faturamento por produto em 2025?,train/data_query/2
+[blocked none] [context datasource_available last_error_none missing_none] || user: Crie um gráfico de pedidos por semana,data_query,Crie um gráfico de pedidos por semana,train/data_query/3
+[blocked none] [context datasource_available last_error_none missing_none] || user: Liste os dez clientes com maior receita,data_query,Liste os dez clientes com maior receita,train/data_query/4
+[blocked none] [context datasource_available last_error_none missing_none] || user: Calcule a taxa de cancelamento por canal,data_query,Calcule a taxa de cancelamento por canal,train/data_query/5
+[blocked none] [context datasource_available last_error_none missing_none] || user: How many orders did we receive last quarter?,data_query,How many orders did we receive last quarter?,train/data_query/6
+[blocked none] [context datasource_available last_error_none missing_none] || user: Show average ticket by store,data_query,Show average ticket by store,train/data_query/7
+[blocked none] [context datasource_available last_error_none missing_none] || user: Compare gross margin across business units,data_query,Compare gross margin across business units,train/data_query/8
+[blocked none] [context datasource_available last_error_none missing_none] || user: Plot the daily revenue trend,data_query,Plot the daily revenue trend,train/data_query/9
+[blocked none] [context datasource_available last_error_none missing_none] || user: Traga uma tabela de custos por centro,data_query,Traga uma tabela de custos por centro,train/data_query/10
+[blocked none] [context datasource_available last_error_none missing_none] || user: Qual a variação do lucro ano contra ano?,data_query,Qual a variação do lucro ano contra ano?,train/data_query/11
+"[blocked none] [context datasource_available last_error_sql_error missing_none] || user: Após a consulta anterior falhar, mostre vendas por trimestre",data_query,"Após a consulta anterior falhar, mostre vendas por trimestre",train/data_query/12
+[blocked none] [context datasource_available last_error_none missing_none] || user: Ordene as lojas pelo ticket médio,data_query,Ordene as lojas pelo ticket médio,train/data_query/13
+[blocked none] [context datasource_available last_error_none missing_none] || user: Quero o ranking de regiões com mais pedidos,data_query,Quero o ranking de regiões com mais pedidos,train/data_query/14
+[blocked none] [context datasource_available last_error_none missing_none] || user: Mostre a distribuição de preços de cada linha,data_query,Mostre a distribuição de preços de cada linha,train/data_query/15
+[blocked none] [context datasource_available last_error_none missing_none] || user: Calcule o percentil de tempo de resposta,data_query,Calcule o percentil de tempo de resposta,train/data_query/16
+[blocked none] [context datasource_available last_error_none missing_none] || user: Quantos chamados cada equipe resolveu?,data_query,Quantos chamados cada equipe resolveu?,train/data_query/17
+[blocked none] [context datasource_available last_error_none missing_none] || user: Analise a evolução do estoque semanal,data_query,Analise a evolução do estoque semanal,train/data_query/18
+[blocked none] [context datasource_available last_error_none missing_none] || user: Que segmento tem mais cancelamentos?,data_query,Que segmento tem mais cancelamentos?,train/data_query/19
+[blocked none] [context datasource_available last_error_none missing_none] || user: Divida os reembolsos por método de pagamento,data_query,Divida os reembolsos por método de pagamento,train/data_query/20
+[blocked none] [context datasource_available last_error_none missing_none] || user: Faça um histograma da margem por filial,data_query,Faça um histograma da margem por filial,train/data_query/21
+[blocked none] [context datasource_available last_error_none missing_none] || user: Cruze atrasos de entrega com cidade,data_query,Cruze atrasos de entrega com cidade,train/data_query/22
+[blocked none] [context datasource_available last_error_none missing_none] || user: Which category has the highest return rate?,data_query,Which category has the highest return rate?,train/data_query/23
+[blocked none] [context datasource_available last_error_none missing_none] || user: Rank products by units sold,data_query,Rank products by units sold,train/data_query/24
+[blocked none] [context datasource_available last_error_none missing_none] || user: Give me a breakdown of refunds by channel,data_query,Give me a breakdown of refunds by channel,train/data_query/25
+[blocked none] [context datasource_available last_error_none missing_none] || user: Compute the p95 latency per service,data_query,Compute the p95 latency per service,train/data_query/26
+[blocked none] [context datasource_available last_error_none missing_none] || user: How does inventory change each week?,data_query,How does inventory change each week?,train/data_query/27
+[blocked none] [context datasource_available last_error_none missing_none] || user: Which customer segment churns most?,data_query,Which customer segment churns most?,train/data_query/28
+[blocked none] [context datasource_available last_error_none missing_none] || user: Summarize support tickets by team,data_query,Summarize support tickets by team,train/data_query/29
+[blocked none] [context datasource_available last_error_none missing_none] || user: Show price distribution across categories,data_query,Show price distribution across categories,train/data_query/30
+[blocked none] [context datasource_available last_error_none missing_none] || user: Me mostre a série diária de acessos,data_query,Me mostre a série diária de acessos,train/data_query/31
+[blocked none] [context datasource_available last_error_none missing_none] || user: Liste as contas com maior inadimplência,data_query,Liste as contas com maior inadimplência,train/data_query/32
+"[blocked none] [context datasource_available last_error_none missing_none] || user: Olá, tudo bem?",pure_chat,"Olá, tudo bem?",train/pure_chat/0
+[blocked none] [context datasource_available last_error_none missing_none] || user: O que você consegue fazer?,pure_chat,O que você consegue fazer?,train/pure_chat/1
+[blocked none] [context datasource_available last_error_none missing_none] || user: Obrigado pela ajuda,pure_chat,Obrigado pela ajuda,train/pure_chat/2
+[blocked none] [context datasource_available last_error_none missing_none] || user: Explique a diferença entre média e mediana,pure_chat,Explique a diferença entre média e mediana,train/pure_chat/3
+[blocked none] [context datasource_available last_error_none missing_none] || user: Como funciona uma análise de dados?,pure_chat,Como funciona uma análise de dados?,train/pure_chat/4
+[blocked none] [context datasource_available last_error_none missing_none] || user: Me dê uma ideia para apresentar resultados,pure_chat,Me dê uma ideia para apresentar resultados,train/pure_chat/5
+"[blocked none] [context datasource_available last_error_none missing_none] || user: Hi, can you introduce yourself?",pure_chat,"Hi, can you introduce yourself?",train/pure_chat/6
+[blocked none] [context datasource_available last_error_none missing_none] || user: What is a KPI?,pure_chat,What is a KPI?,train/pure_chat/7
+[blocked none] [context datasource_available last_error_none missing_none] || user: Tell me how you approach a question,pure_chat,Tell me how you approach a question,train/pure_chat/8
+[blocked none] [context datasource_available last_error_none missing_none] || user: Boa tarde,pure_chat,Boa tarde,train/pure_chat/9
+[blocked none] [context datasource_available last_error_none missing_none] || user: Você pode falar de forma mais simples?,pure_chat,Você pode falar de forma mais simples?,train/pure_chat/10
+[blocked none] [context datasource_available last_error_none missing_none] || user: O que significa correlação?,pure_chat,O que significa correlação?,train/pure_chat/11
+[blocked none] [context datasource_available last_error_none missing_none] || user: O que significa um erro de coluna em SQL?,pure_chat,O que significa um erro de coluna em SQL?,train/pure_chat/12
+[blocked none] [context datasource_available last_error_none missing_none] || user: Como calculo um percentil?,pure_chat,Como calculo um percentil?,train/pure_chat/13
+[blocked none] [context datasource_available last_error_none missing_none] || user: Pode detalhar sua resposta anterior?,pure_chat,Pode detalhar sua resposta anterior?,train/pure_chat/14
+"[blocked none] [context datasource_available last_error_none missing_none] || user: Não preciso de números, só uma explicação",pure_chat,"Não preciso de números, só uma explicação",train/pure_chat/15
+[blocked none] [context datasource_available last_error_none missing_none] || user: Tell me what a data warehouse is,pure_chat,Tell me what a data warehouse is,train/pure_chat/16
+[blocked none] [context datasource_available last_error_none missing_none] || user: What does churn mean?,pure_chat,What does churn mean?,train/pure_chat/17
+[blocked none] [context datasource_available last_error_none missing_none] || user: O que é margem bruta?,pure_chat,O que é margem bruta?,train/pure_chat/18
+[blocked none] [context datasource_available last_error_none missing_none] || user: Qual é a diferença entre ranking e percentil?,pure_chat,Qual é a diferença entre ranking e percentil?,train/pure_chat/19
+[blocked none] [context datasource_available last_error_none missing_none] || user: Explique como interpretar uma tabela,pure_chat,Explique como interpretar uma tabela,train/pure_chat/20
+[blocked none] [context datasource_available last_error_none missing_none] || user: Como você chegou a essa conclusão?,pure_chat,Como você chegou a essa conclusão?,train/pure_chat/21
+[blocked none] [context datasource_available last_error_none missing_none] || user: Me dê um exemplo conceitual,pure_chat,Me dê um exemplo conceitual,train/pure_chat/22
+[blocked none] [context datasource_available last_error_none missing_none] || user: Mostre os números,clarification_needed,Mostre os números,train/clarification_needed/0
+[blocked none] [context datasource_available last_error_none missing_none] || user: Quero uma análise,clarification_needed,Quero uma análise,train/clarification_needed/1
+[blocked none] [context datasource_available last_error_none missing_none] || user: Pode comparar isso?,clarification_needed,Pode comparar isso?,train/clarification_needed/2
+[blocked none] [context datasource_available last_error_none missing_none] || user: Faça um gráfico,clarification_needed,Faça um gráfico,train/clarification_needed/3
+[blocked none] [context datasource_available last_error_none missing_none] || user: Qual indicador devemos usar?,clarification_needed,Qual indicador devemos usar?,train/clarification_needed/4
+[blocked none] [context datasource_available last_error_none missing_none] || user: Mostre os resultados sem dizer de qual fonte,clarification_needed,Mostre os resultados sem dizer de qual fonte,train/clarification_needed/5
+[blocked none] [context datasource_available last_error_none missing_none] || user: Analyze it for me,clarification_needed,Analyze it for me,train/clarification_needed/6
+[blocked none] [context datasource_available last_error_none missing_none] || user: Can you compare those figures?,clarification_needed,Can you compare those figures?,train/clarification_needed/7
+[blocked none] [context datasource_available last_error_none missing_none] || user: Give me the report,clarification_needed,Give me the report,train/clarification_needed/8
+"[blocked data_query] [context datasource_missing last_error_none missing_none] || user: Quero ver os dados, mas ainda não conectei a fonte",clarification_needed,"Quero ver os dados, mas ainda não conectei a fonte",train/clarification_needed/9
+[blocked data_query] [context datasource_missing last_error_none missing_none] || user: Consulte a receita da fonte que ainda não existe,clarification_needed,Consulte a receita da fonte que ainda não existe,train/clarification_needed/10
+[blocked none] [context datasource_available last_error_none missing_none] || user: Qual foi o total?,clarification_needed,Qual foi o total?,train/clarification_needed/11
+"[blocked none] [context datasource_available last_error_none missing_none] || user: Preciso de alguma informação, mas não sei qual",clarification_needed,"Preciso de alguma informação, mas não sei qual",train/clarification_needed/12
+[blocked none] [context datasource_available last_error_none missing_none] || user: Mostre um indicador qualquer,clarification_needed,Mostre um indicador qualquer,train/clarification_needed/13
+[blocked none] [context datasource_available last_error_none missing_none] || user: Pode analisar sem eu dizer a pergunta?,clarification_needed,Pode analisar sem eu dizer a pergunta?,train/clarification_needed/14
+[blocked none] [context datasource_available last_error_none missing_none] || user: Which metric do you need from me?,clarification_needed,Which metric do you need from me?,train/clarification_needed/15
+[blocked none] [context datasource_available last_error_none missing_none] || user: I have not specified the date range,clarification_needed,I have not specified the date range,train/clarification_needed/16
+[blocked none] [context datasource_available last_error_none missing_none] || user: Que fonte de dados devo conectar?,clarification_needed,Que fonte de dados devo conectar?,train/clarification_needed/17
+[blocked none] [context datasource_available last_error_none missing_none] || user: Faça um resumo sem indicar o tema,clarification_needed,Faça um resumo sem indicar o tema,train/clarification_needed/18
+[blocked none] [context datasource_available last_error_none missing_none] || user: Compare dois itens que ainda não escolhi,clarification_needed,Compare dois itens que ainda não escolhi,train/clarification_needed/19
+"[blocked none] [context datasource_available last_error_none missing_none] || user: Quero ver uma tabela, porém falta o assunto",clarification_needed,"Quero ver uma tabela, porém falta o assunto",train/clarification_needed/20
+[blocked none] [context datasource_available last_error_none missing_none] || user: Me ajude a definir o recorte,clarification_needed,Me ajude a definir o recorte,train/clarification_needed/21
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: A consulta falhou; tente corrigir,error_recovery,A consulta falhou; tente corrigir,train/error_recovery/0
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: Esse SQL deu erro de coluna,error_recovery,Esse SQL deu erro de coluna,train/error_recovery/1
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: Tente de novo depois do erro,error_recovery,Tente de novo depois do erro,train/error_recovery/2
+"[blocked data_query] [context datasource_missing last_error_sql_error missing_none] || user: A tabela não existe, ajuste a consulta",error_recovery,"A tabela não existe, ajuste a consulta",train/error_recovery/3
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: Corrija a agregação que quebrou,error_recovery,Corrija a agregação que quebrou,train/error_recovery/4
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: O resultado veio vazio por engano; refaça,error_recovery,O resultado veio vazio por engano; refaça,train/error_recovery/5
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: Retry the failed query,error_recovery,Retry the failed query,train/error_recovery/6
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: Fix the invalid column and run again,error_recovery,Fix the invalid column and run again,train/error_recovery/7
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: The database timed out; recover,error_recovery,The database timed out; recover,train/error_recovery/8
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: Revise o filtro de data que gerou erro,error_recovery,Revise o filtro de data que gerou erro,train/error_recovery/9
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: A execução anterior retornou exceção,error_recovery,A execução anterior retornou exceção,train/error_recovery/10
+"[blocked none] [context datasource_available last_error_sql_error missing_none] || user: A busca falhou, podemos tentar novamente?",error_recovery,"A busca falhou, podemos tentar novamente?",train/error_recovery/11
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: A última consulta usou uma coluna inexistente,error_recovery,A última consulta usou uma coluna inexistente,train/error_recovery/12
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: Tente recuperar o cálculo que falhou,error_recovery,Tente recuperar o cálculo que falhou,train/error_recovery/13
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: O gráfico anterior retornou erro,error_recovery,O gráfico anterior retornou erro,train/error_recovery/14
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: Reexecute depois de corrigir o SQL,error_recovery,Reexecute depois de corrigir o SQL,train/error_recovery/15
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: Fix the broken join in the previous query,error_recovery,Fix the broken join in the previous query,train/error_recovery/16
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: The last data call raised an exception,error_recovery,The last data call raised an exception,train/error_recovery/17
+"[blocked none] [context datasource_available last_error_sql_error missing_none] || user: A conexão caiu durante a consulta, tente outra vez",error_recovery,"A conexão caiu durante a consulta, tente outra vez",train/error_recovery/18
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: Repare o filtro inválido,error_recovery,Repare o filtro inválido,train/error_recovery/19
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: Can we retry after the timeout?,error_recovery,Can we retry after the timeout?,train/error_recovery/20
+"[blocked none] [context datasource_available last_error_sql_error missing_none] || user: O banco rejeitou a query, corrija e repita",error_recovery,"O banco rejeitou a query, corrija e repita",train/error_recovery/21

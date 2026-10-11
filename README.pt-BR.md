@@ -65,6 +65,10 @@ Treinado imitando um jogador baseado em regras, o modelo empata com ele em 300 p
 
 No Lig 4, o modelo imita uma busca de profundidade 4. Sozinho, vence 19% das partidas; com as jogadas inseguras revisadas por uma busca mais profunda, vence 40%, no nível do professor. Juntos, os dois demos mostram quando a revisão humana compensa: quando quem revisa sabe mais que o modelo. Detalhes em [demos/connect4](demos/connect4/README.md).
 
+**Doom:** O [demo com ViZDoom](demos/doom/README.md) treina o NextAction com as decisões de um jogador baseado em regras numa arena Deathmatch e gera um [GIF](demos/doom/doom.gif) com movimentação e combate. Requer `vizdoom>=1.3`.
+
+**Imagens:** `nextaction inspecionar-imagem foto.jpg` identifica pessoas, animais e objetos, salva uma cópia com caixas e rótulos e retorna contagens em JSON. Veja o [guia de identificação de imagens](docs/scenarios/images.md). Requer `pip install -e ".[vision]"`.
+
 ## Testes
 
 São **71 testes automatizados, todos passando, com 88% de cobertura**. O CI roda a suíte no Python 3.12 e 3.13 a cada push e pull request e publica o relatório completo no resumo da execução. A lista de cada teste com resultado, tempo e cobertura por módulo está em [docs/testing.md](docs/testing.md).

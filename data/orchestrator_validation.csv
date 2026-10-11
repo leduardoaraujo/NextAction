@@ -1,0 +1,26 @@
+state,action,utterance,family
+[blocked none] [context datasource_available last_error_none missing_none] || user: Mostre o crescimento de assinaturas por trimestre,data_query,Mostre o crescimento de assinaturas por trimestre,validation/data_query/0
+[blocked none] [context datasource_available last_error_none missing_none] || user: Quanto vendemos por estado no último ano?,data_query,Quanto vendemos por estado no último ano?,validation/data_query/1
+[blocked none] [context datasource_available last_error_none missing_none] || user: Build a chart of active users by month,data_query,Build a chart of active users by month,validation/data_query/2
+[blocked none] [context datasource_available last_error_none missing_none] || user: What is the median delivery time by carrier?,data_query,What is the median delivery time by carrier?,validation/data_query/3
+[blocked none] [context datasource_available last_error_none missing_none] || user: Separe a inadimplência por faixa de cliente,data_query,Separe a inadimplência por faixa de cliente,validation/data_query/4
+[blocked none] [context datasource_available last_error_none missing_none] || user: Compare devoluções entre lojas,data_query,Compare devoluções entre lojas,validation/data_query/5
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: A consulta anterior falhou; agora calcule receita por canal,data_query,A consulta anterior falhou; agora calcule receita por canal,validation/data_query/6
+"[blocked none] [context datasource_available last_error_none missing_none] || user: Bom dia, como posso te chamar?",pure_chat,"Bom dia, como posso te chamar?",validation/pure_chat/0
+[blocked none] [context datasource_available last_error_none missing_none] || user: O que quer dizer desvio padrão?,pure_chat,O que quer dizer desvio padrão?,validation/pure_chat/1
+[blocked none] [context datasource_available last_error_none missing_none] || user: Can you explain what a dashboard is?,pure_chat,Can you explain what a dashboard is?,validation/pure_chat/2
+"[blocked none] [context datasource_available last_error_none missing_none] || user: Obrigado, era só isso",pure_chat,"Obrigado, era só isso",validation/pure_chat/3
+[blocked none] [context datasource_available last_error_none missing_none] || user: Prefiro respostas curtas,pure_chat,Prefiro respostas curtas,validation/pure_chat/4
+[blocked none] [context datasource_available last_error_none missing_none] || user: Me ajude a entender uma metodologia,pure_chat,Me ajude a entender uma metodologia,validation/pure_chat/5
+[blocked none] [context datasource_available last_error_none missing_none] || user: Quero olhar aquilo,clarification_needed,Quero olhar aquilo,validation/clarification_needed/0
+[blocked none] [context datasource_available last_error_none missing_metric] || user: Gere um painel sem escolher a métrica,clarification_needed,Gere um painel sem escolher a métrica,validation/clarification_needed/1
+[blocked none] [context datasource_available last_error_none missing_none] || user: Which numbers should we look at?,clarification_needed,Which numbers should we look at?,validation/clarification_needed/2
+"[blocked none] [context datasource_available last_error_none missing_none] || user: Compare them, please",clarification_needed,"Compare them, please",validation/clarification_needed/3
+"[blocked data_query] [context datasource_missing last_error_none missing_none] || user: Ainda não há fonte conectada, veja minhas vendas",clarification_needed,"Ainda não há fonte conectada, veja minhas vendas",validation/clarification_needed/4
+"[blocked none] [context datasource_available last_error_none missing_metric] || user: Preciso de uma tabela, mas de quê?",clarification_needed,"Preciso de uma tabela, mas de quê?",validation/clarification_needed/5
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: A query retornou erro de sintaxe,error_recovery,A query retornou erro de sintaxe,validation/error_recovery/0
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: Conserte a consulta que não executou,error_recovery,Conserte a consulta que não executou,validation/error_recovery/1
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: The previous chart query failed,error_recovery,The previous chart query failed,validation/error_recovery/2
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: Try again with a valid date field,error_recovery,Try again with a valid date field,validation/error_recovery/3
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: A execução quebrou após o timeout,error_recovery,A execução quebrou após o timeout,validation/error_recovery/4
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: Corrija o nome da tabela e repita,error_recovery,Corrija o nome da tabela e repita,validation/error_recovery/5

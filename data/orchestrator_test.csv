@@ -1,0 +1,35 @@
+state,action,utterance,family
+[blocked none] [context datasource_available last_error_none missing_none] || user: Faça o ranking de filiais por margem,data_query,Faça o ranking de filiais por margem,test/data_query/0
+[blocked none] [context datasource_available last_error_none missing_none] || user: Qual o volume de chamados por equipe?,data_query,Qual o volume de chamados por equipe?,test/data_query/1
+[blocked none] [context datasource_available last_error_none missing_none] || user: Desenhe a evolução semanal do estoque,data_query,Desenhe a evolução semanal do estoque,test/data_query/2
+[blocked none] [context datasource_available last_error_none missing_none] || user: Quais segmentos concentram churn?,data_query,Quais segmentos concentram churn?,test/data_query/3
+[blocked none] [context datasource_available last_error_none missing_none] || user: Break down refunds by payment method,data_query,Break down refunds by payment method,test/data_query/4
+[blocked none] [context datasource_available last_error_none missing_none] || user: Show a table of late deliveries by city,data_query,Show a table of late deliveries by city,test/data_query/5
+[blocked none] [context datasource_available last_error_none missing_none] || user: Compute the 90th percentile of response time,data_query,Compute the 90th percentile of response time,test/data_query/6
+[blocked none] [context datasource_available last_error_none missing_none] || user: Quero a distribuição de preços por categoria,data_query,Quero a distribuição de preços por categoria,test/data_query/7
+"[blocked none] [context datasource_available last_error_sql_error missing_none] || user: O SQL anterior deu erro, agora mostre o ranking de produtos",data_query,"O SQL anterior deu erro, agora mostre o ranking de produtos",test/data_query/8
+[blocked none] [context datasource_available last_error_none missing_none] || user: Oi!,pure_chat,Oi!,test/pure_chat/0
+[blocked none] [context datasource_available last_error_none missing_none] || user: Você lembra do que eu perguntei?,pure_chat,Você lembra do que eu perguntei?,test/pure_chat/1
+[blocked none] [context datasource_available last_error_none missing_none] || user: O que é um percentil?,pure_chat,O que é um percentil?,test/pure_chat/2
+[blocked none] [context datasource_available last_error_none missing_none] || user: Pode explicar com um exemplo?,pure_chat,Pode explicar com um exemplo?,test/pure_chat/3
+"[blocked none] [context datasource_available last_error_none missing_none] || user: Thanks, that's clear",pure_chat,"Thanks, that's clear",test/pure_chat/4
+[blocked none] [context datasource_available last_error_none missing_none] || user: What can this assistant do?,pure_chat,What can this assistant do?,test/pure_chat/5
+[blocked none] [context datasource_available last_error_none missing_none] || user: Como devo interpretar um gráfico?,pure_chat,Como devo interpretar um gráfico?,test/pure_chat/6
+[blocked none] [context datasource_available last_error_none missing_none] || user: Me responda em inglês daqui para frente,pure_chat,Me responda em inglês daqui para frente,test/pure_chat/7
+[blocked none] [context datasource_available last_error_none missing_none] || user: Explique por que uma consulta SQL pode falhar,pure_chat,Explique por que uma consulta SQL pode falhar,test/pure_chat/8
+[blocked none] [context datasource_available last_error_none missing_none] || user: Me mostre algo interessante,clarification_needed,Me mostre algo interessante,test/clarification_needed/0
+"[blocked none] [context datasource_available last_error_none missing_metric] || user: Preciso de um resumo, ainda sem assunto",clarification_needed,"Preciso de um resumo, ainda sem assunto",test/clarification_needed/1
+[blocked none] [context datasource_available last_error_none missing_none] || user: What should I analyze?,clarification_needed,What should I analyze?,test/clarification_needed/2
+[blocked data_query] [context datasource_missing last_error_none missing_none] || user: Use the dataset I have not connected yet,clarification_needed,Use the dataset I have not connected yet,test/clarification_needed/3
+"[blocked none] [context datasource_available last_error_none missing_metric] || user: Faça uma comparação, mas não sei de quais períodos",clarification_needed,"Faça uma comparação, mas não sei de quais períodos",test/clarification_needed/4
+[blocked none] [context datasource_available last_error_none missing_none] || user: Olhe esses valores para mim,clarification_needed,Olhe esses valores para mim,test/clarification_needed/5
+[blocked none] [context datasource_available last_error_none missing_none] || user: Pode preparar uma visualização qualquer?,clarification_needed,Pode preparar uma visualização qualquer?,test/clarification_needed/6
+[blocked none] [context datasource_available last_error_none missing_none] || user: Qual é o número?,clarification_needed,Qual é o número?,test/clarification_needed/7
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: A coluna de período causou uma exceção; ajuste,error_recovery,A coluna de período causou uma exceção; ajuste,test/error_recovery/0
+"[blocked none] [context datasource_available last_error_sql_error missing_none] || user: A última tentativa falhou, refaça",error_recovery,"A última tentativa falhou, refaça",test/error_recovery/1
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: The SQL returned an error; repair it,error_recovery,The SQL returned an error; repair it,test/error_recovery/2
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: Recover from the failed chart request,error_recovery,Recover from the failed chart request,test/error_recovery/3
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: Não funcionou: a fonte expirou,error_recovery,Não funcionou: a fonte expirou,test/error_recovery/4
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: A consulta anterior estourou o tempo limite,error_recovery,A consulta anterior estourou o tempo limite,test/error_recovery/5
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: Conserte o campo inválido usado antes,error_recovery,Conserte o campo inválido usado antes,test/error_recovery/6
+[blocked none] [context datasource_available last_error_sql_error missing_none] || user: Rode novamente após corrigir a sintaxe,error_recovery,Rode novamente após corrigir a sintaxe,test/error_recovery/7

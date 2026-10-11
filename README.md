@@ -116,14 +116,18 @@ Responses always use the English names. Human-readable messages (errors, warning
 
 ## Demos
 
-Two games where the model makes every decision on screen: the probability of each move, the moves the policy blocked, and the moments it hands the move to a reviewer because it is unsure.
+Pac-Man and Connect Four show each move's probabilities, blocked choices and review decisions. Doom shows the model moving and fighting in ViZDoom.
 
 | Pac-Man | Connect Four |
 | --- | --- |
 | ![NextAction playing Pac-Man](demos/pacman/pacman.gif) | ![NextAction playing Connect Four](demos/connect4/connect4.gif) |
 | Imitates a rule-based expert and matches it on 300 unseen games (39–40% wins against 35%), asking for help on 3.3% of moves. Reviewing more often does not win more, because the expert is no stronger than the model. [Demo, error analysis](demos/pacman/README.md) | Imitates a depth-4 search. Alone it wins 19%; with unsure moves reviewed by a deeper search it wins 40%, at its teacher's level, and a stronger reviewer beats an equal one by 13 wins in 200 games. [Demo](demos/connect4/README.md) |
 
-Together they show when human-in-the-loop review pays off: when the reviewer knows more than the model. Each demo folder has the scripts to regenerate the data, watch any agent play live, record the GIF and rerun the benchmark.
+Together they show when human-in-the-loop review pays off: when the reviewer knows more than the model. Their folders include scripts to regenerate data, watch agents play, record GIFs and rerun benchmarks.
+
+**Doom:** The [ViZDoom demo](demos/doom/README.md) trains on a rule-based player's decisions in a Deathmatch arena, then records movement, fights and decision probabilities to a [GIF](demos/doom/doom.gif). Requires `vizdoom>=1.3`.
+
+**Images:** `nextaction inspect-image photo.jpg` detects people, animals and other objects, writes an annotated copy and returns counts and boxes as JSON. See the [image detection guide](docs/scenarios/images.md). Install with `pip install -e ".[vision]"`.
 
 ## Features
 
@@ -137,7 +141,7 @@ Together they show when human-in-the-loop review pays off: when the reviewer kno
 | **Tuning** | `nextaction tune` searches the hyperparameter grid in the scenario config |
 | **Evaluation** | cross-validation, separate test set or most-recent slice; per-action F1, confusion matrix, ECE, threshold table |
 | **Rule-based ranker** | filters and ranks flight offers by budget, baggage, stops, price and duration, with explanations |
-| **Demos** | Pac-Man and Connect Four played by the model, with a live decision panel, GIF recording and benchmarks |
+| **Demos** | Pac-Man, Connect Four and Doom gameplay; image object detection with annotated output |
 | **Clients** | typed Rust CLI (`clients/rust`) |
 | **Distribution** | skops export with a generated model card and the decision policy, published on the [Hugging Face Hub](https://huggingface.co/ludolua/nextaction-agent) |
 
