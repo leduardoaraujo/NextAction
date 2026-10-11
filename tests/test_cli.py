@@ -33,8 +33,11 @@ class CliTest(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.model = str(Path(self.temp.name) / "flights.joblib")
+        self.jobs = patch.dict(os.environ, {"OPENDECISION_JOBS_DIR": self.temp.name})
+        self.jobs.start()
 
     def tearDown(self):
+        self.jobs.stop()
         self.temp.cleanup()
 
     def test_train_and_decide_in_english(self):

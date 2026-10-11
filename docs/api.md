@@ -17,6 +17,8 @@ Interactive OpenAPI docs are served at `http://127.0.0.1:8000/docs`. The `agent`
 | --- | --- | --- |
 | `GET` | `/health` | liveness check |
 | `GET` | `/v1/models` | which scenario models are trained locally |
+| `GET` | `/v1/jobs` | training and import jobs with their progress ([progress.md](progress.md)) |
+| `GET` | `/dashboard` | live web page for those jobs |
 | `POST` | `/v1/actions/decide` | next action for `agent`, `flights` or `research` |
 | `POST` | `/v1/decisions/{decision_id}/feedback` | record the action that should have been taken |
 | `POST` | `/v1/flights/evaluate` | filter and rank the flight offers sent in the body |

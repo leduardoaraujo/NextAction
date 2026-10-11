@@ -152,6 +152,19 @@ MESSAGES = {
         "en": "The skops file needs untrusted types; review it before publishing.",
         "pt": "O arquivo skops exige tipos não confiáveis; revise antes de publicar.",
     },
+    # Progress stages and job states
+    "stage_vectorize": {"en": "Vectorizing text", "pt": "Vetorizando texto"},
+    "stage_fit": {"en": "Fitting model", "pt": "Ajustando modelo"},
+    "stage_cross_validation": {"en": "Cross-validation", "pt": "Validação cruzada"},
+    "stage_predict": {"en": "Predicting", "pt": "Prevendo"},
+    "stage_import": {"en": "Importing dialogues", "pt": "Importando diálogos"},
+    "stage_translate": {"en": "Translating", "pt": "Traduzindo"},
+    "stage_encode": {"en": "Encoding text", "pt": "Codificando texto"},
+    "status_running": {"en": "running", "pt": "rodando"},
+    "status_done": {"en": "done", "pt": "concluído"},
+    "status_failed": {"en": "failed", "pt": "falhou"},
+    "status_stale": {"en": "stale", "pt": "parado"},
+    "no_jobs": {"en": "No jobs yet.", "pt": "Nenhum job ainda."},
     # CLI help
     "cli_description": {
         "en": "OpenDecision: predict an agent's next action and know when to ask a human.",
@@ -214,6 +227,9 @@ MESSAGES = {
         "pt": "repositório no Hub, por exemplo usuario/opendecision-agent",
     },
     "cli_license": {"en": "Hub license id, e.g. mit", "pt": "identificador de licença do Hub, por exemplo mit"},
+    "cli_jobs": {"en": "show training and import jobs with their progress", "pt": "mostra os jobs de treino e importação com o progresso"},
+    "cli_watch": {"en": "refresh every second until interrupted", "pt": "atualiza a cada segundo até ser interrompido"},
+    "cli_no_progress": {"en": "do not draw progress bars", "pt": "não desenha barras de progresso"},
     "cli_trip": {"en": "JSON file with the request and offers", "pt": "arquivo JSON com o pedido e as ofertas"},
 }
 

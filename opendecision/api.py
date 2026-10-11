@@ -5,11 +5,13 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi.responses import HTMLResponse
 
 from .decision_log import record_decision, record_feedback
 from .flights import rank_flights
 from .i18n import LocalizedError, language_from_header, t
 from .model import decide
+from .progress import describe, list_jobs
 from .scenarios import ROOT, SCENARIOS
 from .schemas import (
     ActionRequest, ActionResponse, FeedbackRequest, FeedbackResponse, FlightRequest, FlightResponse,
@@ -39,6 +41,17 @@ def health() -> dict[str, str]:
 @app.get("/v1/models", tags=["service"])
 def models() -> dict[str, dict[str, bool]]:
     return {"models": {name: path.is_file() for name, path in MODEL_PATHS.items()}}
+
+
+@app.get("/v1/jobs", tags=["service"])
+def jobs(lang: Language) -> dict[str, list[dict]]:
+    """Training, evaluation and import jobs with their progress, most recent first."""
+    return {"jobs": [describe(record, lang) for record in list_jobs()]}
+
+
+@app.get("/dashboard", response_class=HTMLResponse, include_in_schema=False)
+def dashboard() -> str:
+    return (Path(__file__).parent / "static" / "dashboard.html").read_text(encoding="utf-8")
 
 
 @app.post("/v1/actions/decide", response_model=ActionResponse, tags=["decisions"])

@@ -112,8 +112,9 @@ Responses always use the English names. Human-readable messages (errors, warning
 | | |
 | --- | --- |
 | **Scenarios** | `agent` (generic, real dialogues), `flights` (flight booking), `research` (research agent) |
-| **CLI** | `train`, `decide`, `evaluate`, `import-sgd`, `export-labels`, `export-hf`, `rank-flights` |
-| **REST API** | decide, feedback, flight-offer ranking, model status; OpenAPI docs at `/docs` |
+| **CLI** | `train`, `decide`, `evaluate`, `import-sgd`, `export-labels`, `export-hf`, `rank-flights`, `jobs` |
+| **REST API** | decide, feedback, flight-offer ranking, model status, jobs; OpenAPI docs at `/docs` |
+| **Progress tracking** | progress bars in the terminal, `opendecision jobs --watch` and a live web dashboard at `/dashboard` |
 | **Evaluation** | cross-validation, separate test set or most-recent slice; per-action F1, confusion matrix, ECE, threshold table |
 | **Rule-based ranker** | filters and ranks flight offers by budget, baggage, stops, price and duration, with explanations |
 | **Clients** | typed Rust CLI (`clients/rust`) |
@@ -126,6 +127,7 @@ opendecision/
   vocabulary.py    canonical actions, scenarios and state format, with Portuguese aliases
   scenarios.py     data and model locations of each built-in scenario
   i18n.py          English and Portuguese messages
+  progress.py      job progress: terminal bars and jobs/<id>.json for the CLI and dashboard
   model.py         training and inference (TF-IDF + logistic regression)
   evaluation.py    evaluation report: per-action metrics, calibration, thresholds
   sgd.py           Schema-Guided Dialogue → state,action converter
@@ -146,6 +148,7 @@ tests/             unit tests (python -m unittest discover -s tests)
 - [Generic agent model on Schema-Guided Dialogue](docs/sgd-model.md): data mapping, state format, results, ablation
 - [Evaluation](docs/evaluation.md): what each metric means and how to choose a threshold
 - [REST API, feedback loop, languages and Rust client](docs/api.md)
+- [Tracking progress](docs/progress.md): terminal bars, `jobs --watch` and the web dashboard
 - [Publishing to Hugging Face](docs/hugging-face.md)
 - [Flight booking scenario](docs/scenarios/flights.md)
 
