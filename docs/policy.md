@@ -57,6 +57,14 @@ deny = ["search", "execute"]
    | `when_filled_all = ["origin", "date"]` | all of these slots are filled |
    | `when_intent = ["BookFlight"]` | the active intent is one of these |
 
+   A rule can also take its `deny` list from the state itself: `deny_tag = "blocked"` denies the actions named in a `[blocked ...]` tag. This lets the environment send its own action mask, such as walls in the [Pac-Man demo](../demos/pacman/README.md):
+
+   ```toml
+   [[policy.rules]]
+   id = "no_walls"
+   deny_tag = "blocked"   # [blocked up left] denies up and left
+   ```
+
 3. The top action is chosen. It is automated only if its probability reaches that action's `min_confidence` (or `default_threshold`). A `threshold` sent in the request overrides every per-action value.
 4. The response explains itself. For `[missing destination_airport departure_date] || user: I need a flight from Boston.`:
 

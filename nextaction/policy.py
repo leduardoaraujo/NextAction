@@ -20,7 +20,7 @@ from .i18n import LocalizedError
 from .vocabulary import normalize_state
 
 RISKS = ("low", "medium", "irreversible")
-_TAG = re.compile(r"\[(intent|filled|missing|requested)\s+([^\]]*)\]")
+_TAG = re.compile(r"\[([a-z_]+)\s+([^\]]*)\]")
 
 
 @dataclass(frozen=True)
@@ -33,18 +33,34 @@ class ActionPolicy:
 
 @dataclass(frozen=True)
 class Rule:
-    """Deny actions when every condition given holds. Conditions read the state tags."""
+    """Deny actions when every condition given holds. Conditions read the state tags.
+
+    ``deny_tag`` names a state tag whose values are actions to deny, so the environment can
+    send its own mask: with ``deny_tag = "blocked"``, ``[blocked up left]`` denies ``up`` and
+    ``left``. Without conditions, a ``deny_tag`` rule applies to every state.
+    """
 
     id: str
-    deny: tuple[str, ...]
+    deny: tuple[str, ...] = ()
+    deny_tag: str | None = None
     when_missing_any: bool = False
     when_missing: tuple[str, ...] = ()
     when_filled_all: tuple[str, ...] = ()
     when_intent: tuple[str, ...] = ()
 
-    def matches(self, state: "ParsedState | None") -> bool:
+    def denied(self, state: "ParsedState | None") -> set[str]:
+        """Actions this rule denies in ``state`` (empty when it does not apply)."""
         if state is None:
-            return False
+            return set()
+        checks = self._checks(state)
+        if (checks and not all(checks)) or (not checks and not self.deny_tag):
+            return set()
+        actions = set(self.deny)
+        if self.deny_tag:
+            actions |= state.tags.get(self.deny_tag, frozenset())
+        return actions
+
+    def _checks(self, state: "ParsedState") -> list[bool]:
         checks = []
         if self.when_missing_any:
             checks.append(bool(state.missing))
@@ -54,7 +70,7 @@ class Rule:
             checks.append(set(self.when_filled_all) <= state.filled)
         if self.when_intent:
             checks.append(state.intent in self.when_intent)
-        return bool(checks) and all(checks)
+        return checks
 
 
 @dataclass(frozen=True)
@@ -78,10 +94,11 @@ class ParsedState:
     filled: frozenset[str]
     missing: frozenset[str]
     requested: frozenset[str]
+    tags: dict[str, frozenset[str]] = field(default_factory=dict)
 
 
 def parse_state(state: str) -> ParsedState | None:
-    """Read ``[intent] [filled] [missing] [requested]`` tags; ``None`` when the state has none."""
+    """Read ``[name values]`` tags such as ``[intent X] [missing date]``; ``None`` when there are none."""
     tags = {name: values.split() for name, values in _TAG.findall(normalize_state(state))}
     if not tags:
         return None
@@ -90,7 +107,8 @@ def parse_state(state: str) -> ParsedState | None:
         return frozenset(v for v in tags.get(name, []) if v != "none")
 
     intent = next(iter(tags.get("intent", [])), None)
-    return ParsedState(intent, values("filled"), values("missing"), values("requested"))
+    return ParsedState(intent, values("filled"), values("missing"), values("requested"),
+                       {name: values(name) for name in tags})
 
 
 def apply(probabilities: dict[str, float], state: str, policy: Policy, threshold: float | None = None) -> dict:
@@ -99,9 +117,9 @@ def apply(probabilities: dict[str, float], state: str, policy: Policy, threshold
     ``threshold`` overrides the per-action thresholds, for callers that ask for one explicitly.
     """
     parsed = parse_state(state)
-    matched = [rule for rule in policy.rules if rule.matches(parsed)]
-    blocked = sorted({action for rule in matched for action in rule.deny} & set(probabilities))
-    reasons = [f"masked_by_rule:{rule.id}" for rule in matched if set(rule.deny) & set(probabilities)]
+    denials = {rule.id: rule.denied(parsed) & set(probabilities) for rule in policy.rules}
+    blocked = sorted(set().union(*denials.values()))
+    reasons = [f"masked_by_rule:{rule_id}" for rule_id, actions in denials.items() if actions]
 
     allowed = {action: p for action, p in probabilities.items() if action not in blocked}
     if not allowed or sum(allowed.values()) == 0:
@@ -199,7 +217,7 @@ def from_dict(data: dict) -> Policy:
         )
     rules = tuple(
         Rule(
-            id=rule["id"], deny=tuple(rule["deny"]),
+            id=rule["id"], deny=tuple(rule.get("deny", ())), deny_tag=rule.get("deny_tag"),
             when_missing_any=bool(rule.get("when_missing_any", False)),
             when_missing=tuple(rule.get("when_missing", ())),
             when_filled_all=tuple(rule.get("when_filled_all", ())),
