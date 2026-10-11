@@ -127,11 +127,51 @@ Responses always use the English names. Human-readable messages (errors, warning
 | **Clients** | typed Rust CLI (`clients/rust`) |
 | **Distribution** | skops export plus generated Hugging Face model card |
 
+## Testing
+
+Two kinds of evidence back this project: **software tests** that check every contract, and **model evaluations** on data the model never saw.
+
+### Software tests
+
+**61 tests, all passing, 87% coverage** (lines and branches). CI runs them on Python 3.12 and 3.13 for every push and pull request, builds the Rust client, and publishes the full report in each run's summary on the [Actions tab](https://github.com/leduardoaraujo/OpenDecision/actions/workflows/ci.yml).
+
+| Suite | Tests | What it verifies |
+| --- | --- | --- |
+| [`test_api`](tests/test_api.py) | 12 | REST contracts in English and with Portuguese fields, feedback loop, localized errors, flight ranking |
+| [`test_policy`](tests/test_policy.py) | 10 | rule masking, per-action thresholds, irreversible actions, cost-based calibration, tuning written back to TOML |
+| [`test_flights`](tests/test_flights.py) | 7 | rule-based offer filtering and ranking, validation errors in both languages |
+| [`test_progress`](tests/test_progress.py) | 7 | job files, stale jobs, `jobs` command, `/v1/jobs` and the dashboard |
+| [`test_cli`](tests/test_cli.py) | 6 | English commands, Portuguese aliases, `--lang` and `OPENDECISION_LANG` |
+| [`test_vocabulary`](tests/test_vocabulary.py) | 6 | action and state normalization, Portuguese CSVs, models trained with Portuguese labels |
+| [`test_evaluation`](tests/test_evaluation.py) | 5 | cross-validation, recent-slice testing, threshold table, localized report |
+| [`test_sgd`](tests/test_sgd.py) | 4 | SGD act mapping, missing-slot state, flights schema |
+| [`test_decision_log`](tests/test_decision_log.py) | 2 | append-only log, latest feedback wins, label export |
+| [`test_hub`](tests/test_hub.py) | 2 | skops export loads safely, model card metadata |
+
+Every test with its result and duration, and coverage per module, are in **[docs/testing.md](docs/testing.md)**. To reproduce:
+
+```bash
+pip install -e ".[dev]"
+python -m unittest discover -s tests                     # run the suite
+python scripts/test_report.py --output docs/testing.md   # suite + coverage report
+```
+
+### Model evaluation
+
+Model claims in this README are measured, not estimated. Each number comes from a held-out split and can be regenerated with one command:
+
+| Claim | Evidence | Reproduce |
+| --- | --- | --- |
+| 0.90 accuracy on services never seen in training | official SGD test split, 42,297 turns | `opendecision evaluate agent` |
+| Dialogue state lifts accuracy from 0.77 to 0.90 | ablation with and without state tags | [docs/sgd-model.md](docs/sgd-model.md#ablation-does-the-dialogue-state-matter) |
+| Calibrated policy lowers expected cost by 12% | thresholds fitted on the dev split, scored on test | `opendecision calibrate-policy agent`, then `evaluate agent` ([docs/policy.md](docs/policy.md#results-on-the-sgd-test-split)) |
+| The small bundled scenarios are not reliable | cross-validation gives 0.50 on 48 examples | `opendecision evaluate flights` |
+
 ## Repository layout
 
 ```text
 opendecision/
-  vocabulary.py    canonical actions, scenarios and state format, with Portuguese aliases
+  vocabulary.py    canonical actions and state format, with Portuguese aliases
   scenarios.py     loads configs/<scenario>.toml: data, model parameters, tuning grid, policy
   policy.py        decision policy: rules, per-action thresholds, risk, cost-based calibration
   tuning.py        hyperparameter search and policy calibration, written back to the config
@@ -149,8 +189,8 @@ clients/rust/      Rust client for the REST API
 configs/           one TOML file per scenario
 data/              bundled synthetic examples (external data goes to data/external/, git-ignored)
 docs/              detailed documentation
-scripts/           one-off data tools (SGD translation)
-tests/             unit tests (python -m unittest discover -s tests)
+scripts/           test report and one-off data tools
+tests/             test suites (see Testing)
 ```
 
 ## Documentation
@@ -158,6 +198,7 @@ tests/             unit tests (python -m unittest discover -s tests)
 - [Generic agent model on Schema-Guided Dialogue](docs/sgd-model.md): data mapping, state format, results, ablation
 - [Scenario configs and decision policy](docs/policy.md): rules, thresholds, error costs, tuning
 - [Evaluation](docs/evaluation.md): what each metric means and how to choose a threshold
+- [Test report](docs/testing.md): every test with its result, duration and coverage per module
 - [REST API, feedback loop, languages and Rust client](docs/api.md)
 - [Tracking progress](docs/progress.md): terminal bars, `jobs --watch` and the web dashboard
 - [Publishing to Hugging Face](docs/hugging-face.md)
