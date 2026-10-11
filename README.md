@@ -2,7 +2,7 @@
 
 **A small, auditable next-action model for AI agents.** Given the current state of a conversation, OpenDecision predicts what the agent should do next (ask, search, present options, confirm, execute, end the conversation) with a probability for every action and a threshold that sends uncertain cases to a human. It speaks **English and Portuguese**.
 
-[![CI](https://github.com/leduardoaraujo/OpenDecision/actions/workflows/ci.yml/badge.svg)](https://github.com/leduardoaraujo/OpenDecision/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/leduardoaraujo/OpenDecision/ci.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/leduardoaraujo/OpenDecision/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?logo=scikitlearn&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
