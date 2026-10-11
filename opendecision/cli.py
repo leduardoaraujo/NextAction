@@ -4,7 +4,10 @@ import argparse
 import json
 from pathlib import Path
 
+from .avaliacao import avaliar
+from .hub import CENARIOS, exportar
 from .modelo import decidir, treinar
+from .registro import exportar_rotulos
 from .passagens import avaliar_passagens
 
 
@@ -22,12 +25,41 @@ def main() -> None:
         "avaliar-passagens", help="Filtra e ordena ofertas de uma viagem descrita em JSON"
     )
     comando_passagens.add_argument("cenario", type=Path)
+    comando_hf = comandos.add_parser(
+        "exportar-hf", help="Gera pasta com modelo skops e model card para o Hugging Face"
+    )
+    comando_hf.add_argument("cenario", choices=sorted(CENARIOS))
+    comando_hf.add_argument("--destino", type=Path, help="Padrão: hf/<cenario>")
+    comando_hf.add_argument("--repo", help="Repositório no Hub, por exemplo usuario/opendecision-passagens")
+    comando_hf.add_argument("--licenca", help="Identificador de licença do Hub, por exemplo mit")
+    comando_avaliar = comandos.add_parser(
+        "avaliar", help="Mede erros por ação, calibração e efeito do limiar de revisão"
+    )
+    comando_avaliar.add_argument("--dados", type=Path, default=Path("dados/exemplos.csv"))
+    comando_avaliar.add_argument("--teste", type=Path, help="CSV de teste separado do treino")
+    comando_avaliar.add_argument(
+        "--fracao-final", type=float, help="Usa as últimas linhas do CSV como teste (ordem cronológica)"
+    )
+    comando_rotulos = comandos.add_parser(
+        "exportar-rotulos", help="Converte decisões com feedback em CSV de treino"
+    )
+    comando_rotulos.add_argument("cenario", choices=sorted(CENARIOS))
+    comando_rotulos.add_argument("--registro", type=Path, default=Path("registros/decisoes.jsonl"))
+    comando_rotulos.add_argument("--destino", type=Path, help="Padrão: dados/rotulados_<cenario>.csv")
     argumentos = parser.parse_args()
     try:
         if argumentos.comando == "treinar":
             resultado = treinar(argumentos.dados, argumentos.modelo)
         elif argumentos.comando == "decidir":
             resultado = decidir(argumentos.modelo, argumentos.estado, argumentos.limiar)
+        elif argumentos.comando == "avaliar":
+            resultado = avaliar(argumentos.dados, argumentos.teste, argumentos.fracao_final)
+        elif argumentos.comando == "exportar-rotulos":
+            destino = argumentos.destino or Path("dados") / f"rotulados_{argumentos.cenario}.csv"
+            resultado = exportar_rotulos(argumentos.registro, destino, argumentos.cenario)
+        elif argumentos.comando == "exportar-hf":
+            destino = argumentos.destino or Path("hf") / argumentos.cenario
+            resultado = exportar(argumentos.cenario, destino, argumentos.repo, argumentos.licenca)
         else:
             cenario = json.loads(argumentos.cenario.read_text(encoding="utf-8"))
             resultado = avaliar_passagens(cenario)

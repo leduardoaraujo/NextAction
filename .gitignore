@@ -2,3 +2,6 @@
 __pycache__/
 modelos/
 clients/rust/target/
+hf/
+registros/
+dados/rotulados_*.csv

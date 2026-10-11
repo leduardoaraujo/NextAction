@@ -21,11 +21,14 @@ class ApiTest(unittest.TestCase):
         cls.temp = tempfile.TemporaryDirectory()
         cls.model_path = Path(cls.temp.name) / "passagens.joblib"
         treinar(ROOT / "dados" / "passagens.csv", cls.model_path)
+        cls.registro = patch("opendecision.api.REGISTRO", Path(cls.temp.name) / "decisoes.jsonl")
+        cls.registro.start()
         cls.client = TestClient(app)
 
     @classmethod
     def tearDownClass(cls):
         cls.client.close()
+        cls.registro.stop()
         cls.temp.cleanup()
 
     def test_health_e_openapi(self):
@@ -43,6 +46,26 @@ class ApiTest(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["proxima_acao"], "buscar_voos")
         self.assertIn("probabilidades_estimadas", response.json())
+
+    def test_feedback_vincula_acao_final_a_decisao(self):
+        with patch.dict(MODEL_PATHS, {"passagens": self.model_path}):
+            decisao = self.client.post("/v1/actions/decide", json={
+                "cenario": "passagens", "estado": "O viajante escolheu o voo das 8h",
+            }).json()
+        response = self.client.post(
+            f"/v1/decisions/{decisao['decisao_id']}/feedback",
+            json={"acao_final": "pedir_confirmacao", "comentario": "já havia escolha"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["acao_final"], "pedir_confirmacao")
+
+    def test_feedback_de_decisao_inexistente_retorna_404(self):
+        response = self.client.post("/v1/decisions/naoexiste/feedback", json={"acao_final": "buscar_voos"})
+        self.assertEqual(response.status_code, 404)
+
+    def test_feedback_com_acao_invalida_retorna_422(self):
+        response = self.client.post("/v1/decisions/x/feedback", json={"acao_final": "Buscar Voos!"})
+        self.assertEqual(response.status_code, 422)
 
     def test_modelo_ausente_retorna_503(self):
         with patch.dict(MODEL_PATHS, {"passagens": self.model_path.parent / "ausente.joblib"}):
