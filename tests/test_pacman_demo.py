@@ -4,6 +4,9 @@ import sys
 import unittest
 from pathlib import Path
 
+# Both demos have modules named game and features: drop any already imported.
+for _module in ("game", "features", "expert", "play"):
+    sys.modules.pop(_module, None)
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "demos" / "pacman"))
 
 from expert import expert_action  # noqa: E402

@@ -114,13 +114,16 @@ English is the canonical language of the code and the contracts; Portuguese is a
 
 Responses always use the English names. Human-readable messages (errors, warnings, help) follow `--lang pt`, `NEXTACTION_LANG=pt` or the `Accept-Language: pt-BR` header. Details are in [docs/api.md](docs/api.md#languages).
 
-## Demo: Pac-Man
+## Demos
 
-NextAction choosing Pac-Man's next move in real time, with every decision on screen: the probability of each move, the moves the policy blocked, and the moments the model hands the move to an expert because it is unsure.
+Two games where the model makes every decision on screen: the probability of each move, the moves the policy blocked, and the moments it hands the move to a reviewer because it is unsure.
 
-![NextAction playing Pac-Man](demos/pacman/pacman.gif)
+| Pac-Man | Connect Four |
+| --- | --- |
+| ![NextAction playing Pac-Man](demos/pacman/pacman.gif) | ![NextAction playing Connect Four](demos/connect4/connect4.gif) |
+| Imitates a rule-based expert and matches it on 300 unseen games (39–40% wins against 35%), asking for help on 3.3% of moves. Reviewing more often does not win more, because the expert is no stronger than the model. [Demo, error analysis](demos/pacman/README.md) | Imitates a depth-4 search. Alone it wins 19%; with unsure moves reviewed by a deeper search it wins 40%, at its teacher's level, and a stronger reviewer beats an equal one by 13 wins in 200 games. [Demo](demos/connect4/README.md) |
 
-Trained by imitating a rule-based expert, the model matches it on 300 unseen games (39–40% wins against 35%, overlapping 95% intervals) and asks for help on 3.3% of moves. Everything needed to reproduce it, from data generation to the GIF, is in [demos/pacman](demos/pacman/README.md).
+Together they show when human-in-the-loop review pays off: when the reviewer knows more than the model. Each demo folder has the scripts to regenerate the data, watch any agent play live, record the GIF and rerun the benchmark.
 
 ## Features
 
@@ -134,7 +137,7 @@ Trained by imitating a rule-based expert, the model matches it on 300 unseen gam
 | **Tuning** | `nextaction tune` searches the hyperparameter grid in the scenario config |
 | **Evaluation** | cross-validation, separate test set or most-recent slice; per-action F1, confusion matrix, ECE, threshold table |
 | **Rule-based ranker** | filters and ranks flight offers by budget, baggage, stops, price and duration, with explanations |
-| **Demo** | Pac-Man played by the model, with a live decision panel, GIF recording and a 300-game benchmark |
+| **Demos** | Pac-Man and Connect Four played by the model, with a live decision panel, GIF recording and benchmarks |
 | **Clients** | typed Rust CLI (`clients/rust`) |
 | **Distribution** | skops export with a generated model card and the decision policy, published on the [Hugging Face Hub](https://huggingface.co/ludolua/nextaction-agent) |
 
@@ -144,13 +147,14 @@ Two kinds of evidence back this project: **software tests** that check every con
 
 ### Software tests
 
-**66 tests, all passing, 88% coverage** (lines and branches). CI runs them on Python 3.12 and 3.13 for every push and pull request, builds the Rust client, and publishes the full report in each run's summary on the [Actions tab](https://github.com/leduardoaraujo/NextAction/actions/workflows/ci.yml).
+**71 tests, all passing, 88% coverage** (lines and branches). CI runs them on Python 3.12 and 3.13 for every push and pull request, builds the Rust client, and publishes the full report in each run's summary on the [Actions tab](https://github.com/leduardoaraujo/NextAction/actions/workflows/ci.yml).
 
 | Suite | Tests | What it verifies |
 | --- | --- | --- |
 | [`test_api`](tests/test_api.py) | 12 | REST contracts in English and with Portuguese fields, feedback loop, localized errors, flight ranking |
 | [`test_policy`](tests/test_policy.py) | 10 | rule masking, per-action thresholds, irreversible actions, cost-based calibration, tuning written back to TOML |
 | [`test_pacman_demo`](tests/test_pacman_demo.py) | 5 | deterministic games, walls and scoring, state tags, `deny_tag` rules, the Pac-Man config |
+| [`test_connect4_demo`](tests/test_connect4_demo.py) | 5 | win detection, search takes wins and blocks threats, alpha-beta equals minimax, blocked and gifted columns |
 | [`test_flights`](tests/test_flights.py) | 7 | rule-based offer filtering and ranking, validation errors in both languages |
 | [`test_progress`](tests/test_progress.py) | 7 | job files, stale jobs, `jobs` command, `/v1/jobs` and the dashboard |
 | [`test_cli`](tests/test_cli.py) | 6 | English commands, Portuguese aliases, `--lang` and `NEXTACTION_LANG` |
@@ -201,7 +205,8 @@ clients/rust/      Rust client for the REST API
 configs/           one TOML file per scenario
 data/              bundled synthetic examples (external data goes to data/external/, git-ignored)
 docs/              detailed documentation
-demos/pacman/      Pac-Man demo: game, expert, data generation, live view, GIF, benchmark
+demos/pacman/      Pac-Man demo: game, expert, data generation, live view, GIF, benchmark, error analysis
+demos/connect4/    Connect Four demo: board, alpha-beta search, data generation, live view, GIF, benchmark
 scripts/           test report and one-off data tools
 tests/             test suites (see Testing)
 ```

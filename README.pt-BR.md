@@ -53,7 +53,7 @@ Os comandos, as opções, os campos da API, os nomes das ações, as colunas do 
 | Campos da API | `scenario`, `state`, `threshold` | `cenario`, `estado`, `limiar` |
 | Ações | `ask`, `search`, `confirm` | `perguntar`, `buscar`, `confirmar` |
 
-## Demo: Pac-Man
+## Demos: Pac-Man e Lig 4
 
 O modelo escolhendo o próximo movimento do Pac-Man em tempo real. A tela mostra cada decisão: a probabilidade de cada movimento, as jogadas bloqueadas pela política e os momentos em que o modelo passa a jogada para o especialista por estar inseguro.
 
@@ -61,9 +61,13 @@ O modelo escolhendo o próximo movimento do Pac-Man em tempo real. A tela mostra
 
 Treinado imitando um jogador baseado em regras, o modelo empata com ele em 300 partidas inéditas (39% a 40% de vitórias, contra 35%, com intervalos de confiança sobrepostos) e pede ajuda em 3,3% das jogadas. Os scripts para reproduzir tudo estão em [demos/pacman](demos/pacman/README.md).
 
+![NextAction jogando Lig 4](demos/connect4/connect4.gif)
+
+No Lig 4, o modelo imita uma busca de profundidade 4. Sozinho, vence 19% das partidas; com as jogadas inseguras revisadas por uma busca mais profunda, vence 40%, no nível do professor. Juntos, os dois demos mostram quando a revisão humana compensa: quando quem revisa sabe mais que o modelo. Detalhes em [demos/connect4](demos/connect4/README.md).
+
 ## Testes
 
-São **66 testes automatizados, todos passando, com 88% de cobertura**. O CI roda a suíte no Python 3.12 e 3.13 a cada push e pull request e publica o relatório completo no resumo da execução. A lista de cada teste com resultado, tempo e cobertura por módulo está em [docs/testing.md](docs/testing.md).
+São **71 testes automatizados, todos passando, com 88% de cobertura**. O CI roda a suíte no Python 3.12 e 3.13 a cada push e pull request e publica o relatório completo no resumo da execução. A lista de cada teste com resultado, tempo e cobertura por módulo está em [docs/testing.md](docs/testing.md).
 
 Os números do modelo também são medidos, não estimados: cada resultado vem de um conjunto de teste separado e pode ser reproduzido com `nextaction evaluate agent`.
 
