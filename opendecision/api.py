@@ -1,80 +1,78 @@
-"""API REST para decisões de ação e avaliação de passagens."""
+"""REST API for next-action decisions, feedback and flight offer ranking."""
 
 import os
 from pathlib import Path
+from typing import Annotated
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 
-from .api_schemas import (
+from .decision_log import record_decision, record_feedback
+from .flights import rank_flights
+from .i18n import LocalizedError, language_from_header, t
+from .model import decide
+from .scenarios import ROOT, SCENARIOS
+from .schemas import (
     ActionRequest, ActionResponse, FeedbackRequest, FeedbackResponse, FlightRequest, FlightResponse,
 )
-from .modelo import decidir
-from .passagens import avaliar_passagens
-from .registro import registrar_decisao, registrar_feedback
+
+MODEL_PATHS = {name: scenario.model for name, scenario in SCENARIOS.items()}
+# Set OPENDECISION_LOG="" to stop storing the states received (OPENDECISION_REGISTRO also works).
+_log = os.environ.get("OPENDECISION_LOG", os.environ.get("OPENDECISION_REGISTRO", str(ROOT / "logs" / "decisions.jsonl")))
+DECISION_LOG = Path(_log) if _log else None
+
+app = FastAPI(title="OpenDecision API", version="0.2.0")
 
 
-ROOT = Path(__file__).resolve().parent.parent
-MODEL_PATHS = {
-    "pesquisa": ROOT / "modelos" / "decisor.joblib",
-    "passagens": ROOT / "modelos" / "passagens.joblib",
-    "agente": ROOT / "modelos" / "agente.joblib",
-}
-# Defina OPENDECISION_REGISTRO="" para não guardar os estados recebidos.
-_registro = os.environ.get("OPENDECISION_REGISTRO", str(ROOT / "registros" / "decisoes.jsonl"))
-REGISTRO = Path(_registro) if _registro else None
-
-app = FastAPI(title="OpenDecision API", version="0.1.0")
+def language(accept_language: Annotated[str | None, Header()] = None) -> str:
+    """Messages follow Accept-Language (en or pt); field names and actions are always English."""
+    return language_from_header(accept_language)
 
 
-@app.get("/health", tags=["servico"])
+Language = Annotated[str, Depends(language)]
+
+
+@app.get("/health", tags=["service"])
 def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.get("/v1/models", tags=["servico"])
+@app.get("/v1/models", tags=["service"])
 def models() -> dict[str, dict[str, bool]]:
-    return {"modelos": {nome: caminho.is_file() for nome, caminho in MODEL_PATHS.items()}}
+    return {"models": {name: path.is_file() for name, path in MODEL_PATHS.items()}}
 
 
-@app.post("/v1/actions/decide", response_model=ActionResponse, tags=["decisoes"])
-def decide_action(requisicao: ActionRequest) -> dict:
-    caminho = MODEL_PATHS[requisicao.cenario]
-    if not caminho.is_file():
-        raise HTTPException(
-            status_code=503,
-            detail=f"Modelo '{requisicao.cenario}' indisponível. Treine o cenário antes de consultar.",
-        )
+@app.post("/v1/actions/decide", response_model=ActionResponse, tags=["decisions"])
+def decide_action(request: ActionRequest, lang: Language) -> dict:
+    path = MODEL_PATHS[request.scenario]
+    if not path.is_file():
+        raise HTTPException(status_code=503, detail=t("model_unavailable", lang, scenario=request.scenario))
     try:
-        decisao = decidir(caminho, requisicao.estado, requisicao.limiar)
-    except ValueError as erro:
-        raise HTTPException(status_code=422, detail=str(erro)) from erro
-    if REGISTRO is not None:
-        decisao["decisao_id"] = registrar_decisao(
-            REGISTRO, requisicao.cenario, requisicao.estado, decisao
-        )
-    return decisao
+        decision = decide(path, request.state, request.threshold)
+    except LocalizedError as error:
+        raise HTTPException(status_code=422, detail=error.message(lang)) from error
+    if DECISION_LOG is not None:
+        decision["decision_id"] = record_decision(DECISION_LOG, request.scenario, request.state, decision)
+    return decision
 
 
-@app.post(
-    "/v1/decisions/{decisao_id}/feedback", response_model=FeedbackResponse, tags=["decisoes"],
-)
-def decision_feedback(decisao_id: str, requisicao: FeedbackRequest) -> dict:
-    """Informa a ação que deveria ter sido tomada; vira exemplo rotulado para o próximo treino."""
-    if REGISTRO is None:
-        raise HTTPException(status_code=409, detail="O registro de decisões está desativado.")
+@app.post("/v1/decisions/{decision_id}/feedback", response_model=FeedbackResponse, tags=["decisions"])
+def decision_feedback(decision_id: str, request: FeedbackRequest, lang: Language) -> dict:
+    """Report the action that should have been taken; it becomes a labeled training example."""
+    if DECISION_LOG is None:
+        raise HTTPException(status_code=409, detail=t("log_disabled", lang))
     try:
-        nota = registrar_feedback(REGISTRO, decisao_id, **requisicao.model_dump())
-    except KeyError as erro:
-        raise HTTPException(status_code=404, detail="Decisão não encontrada.") from erro
-    return {"decisao_id": decisao_id, "acao_final": nota["acao_final"], "registrado_em": nota["em"]}
+        note = record_feedback(DECISION_LOG, decision_id, **request.model_dump())
+    except KeyError as error:
+        raise HTTPException(status_code=404, detail=t("decision_not_found", lang)) from error
+    return {"decision_id": decision_id, "final_action": note["final_action"], "recorded_at": note["at"]}
 
 
 @app.post(
     "/v1/flights/evaluate", response_model=FlightResponse,
-    response_model_exclude_none=True, tags=["decisoes"],
+    response_model_exclude_none=True, tags=["decisions"],
 )
-def evaluate_flights(requisicao: FlightRequest) -> dict:
+def evaluate_flights(request: FlightRequest, lang: Language) -> dict:
     try:
-        return avaliar_passagens(requisicao.model_dump(exclude_none=True))
-    except ValueError as erro:
-        raise HTTPException(status_code=422, detail=str(erro)) from erro
+        return rank_flights(request.model_dump(exclude_none=True), lang)
+    except LocalizedError as error:
+        raise HTTPException(status_code=422, detail=error.message(lang)) from error

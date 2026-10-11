@@ -1,0 +1,49 @@
+state,action
+O viajante pediu uma passagem mas não informou cidade de origem nem destino,ask
+Sei o destino mas o viajante não informou a cidade de partida,ask
+Sei a origem mas ainda falta saber para qual cidade o passageiro vai,ask
+O passageiro informou o trajeto mas não disse a data de ida,ask
+O pedido é de ida e volta mas falta a data do retorno,ask
+Ainda não sei quantas pessoas vão viajar,ask
+O viajante pediu voo para uma criança mas não informou a idade,ask
+O pedido não esclarece se a viagem é só ida ou ida e volta,ask
+Faltam origem destino e data para procurar passagens,ask
+O viajante quer comparar tarifas com bagagem mas não disse se despachará mala,ask
+O passageiro pediu voo internacional mas não confirmou a cidade de destino,ask
+Existe dúvida sobre o aeroporto de saída e preciso perguntar ao viajante,ask
+Tenho origem GRU destino REC ida 12/11 volta 19/11 e um adulto mas ainda não consultei voos,search
+O viajante informou trajeto datas e número de passageiros e não há resultados de voos,search
+Todos os dados da viagem estão completos e a busca ainda não foi feita,search
+Sei origem destino data e bagagem desejada mas não pesquisei passagens,search
+O passageiro confirmou ida e volta para duas pessoas e preciso consultar voos disponíveis,search
+O usuário deu datas flexíveis e aeroportos possíveis mas a busca não começou,search
+Já confirmei o destino a partida e os viajantes e faltam ofertas de companhias,search
+O roteiro está definido e ainda não tenho horários nem tarifas disponíveis,search
+O viajante respondeu às perguntas pendentes e agora preciso pesquisar opções,search
+Tenho os critérios de viagem completos mas os resultados anteriores expiraram,search
+As datas foram alteradas pelo usuário e devo atualizar a pesquisa de voos,search
+O passageiro definiu novo aeroporto de origem e ainda não busquei para ele,search
+Recebi três voos disponíveis com preço total e duração e preciso selecionar opções claras,present_options
+Já comparei as tarifas e identifiquei o voo mais barato e o mais rápido,present_options
+Os resultados mostram preço bagagem e escalas e posso explicar as alternativas,present_options
+As ofertas foram verificadas e estão prontas para serem mostradas ao viajante,present_options
+Tenho uma opção econômica e outra com horário melhor e devo apresentar ambas,present_options
+Os voos de ida e volta foram encontrados e comparados com o orçamento,present_options
+Conferi o valor final e as regras de bagagem e posso mostrar a comparação,present_options
+O usuário ainda não escolheu uma oferta mas as alternativas já foram avaliadas,present_options
+Encontrei passagens com e sem escala e devo mostrar os tradeoffs ao passageiro,present_options
+As tarifas estão disponíveis e já calculei o custo total de cada opção,present_options
+Concluí a comparação dos voos e falta comunicar os resultados,present_options
+Há duas opções válidas e preciso informar preço horários e restrições,present_options
+O passageiro escolheu o voo A e ainda preciso pedir autorização explícita para comprar,confirm
+O viajante selecionou a tarifa econômica e devo confirmar preço final antes da compra,confirm
+Há uma opção escolhida mas nenhuma aprovação de pagamento foi dada,confirm
+O usuário decidiu pelo voo sem escalas e falta confirmar os detalhes da reserva,confirm
+O passageiro quer prosseguir com uma oferta e preciso solicitar confirmação expressa,confirm
+O itinerário foi escolhido e devo confirmar origem destino datas e valor total,confirm
+O viajante apontou uma companhia específica mas ainda não autorizou a emissão,confirm
+Tenho uma tarifa selecionada e preciso pedir aceite das regras antes de comprar,confirm
+O usuário escolheu a passagem de volta e falta aprovação para avançar,confirm
+O passageiro disse que prefere o voo da manhã e preciso confirmar a oferta concreta,confirm
+Já apresentei as opções e o usuário escolheu uma mas não confirmou a compra,confirm
+O voo foi selecionado e preciso confirmar os dados do passageiro e o preço atualizado,confirm

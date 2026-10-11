@@ -1,86 +1,124 @@
-"""Interface de linha de comando do OpenDecision."""
+"""Command line interface. Commands and options accept English names or Portuguese aliases."""
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
-from .avaliacao import avaliar
-from .hub import CENARIOS, exportar
-from .modelo import decidir, treinar
-from .registro import exportar_rotulos
-from .sgd import ESQUEMAS, converter
-from .passagens import avaliar_passagens
+from pydantic import ValidationError
+
+from .decision_log import export_labels
+from .evaluation import evaluate
+from .flights import rank_flights
+from .hub import export
+from .i18n import LocalizedError, resolve_language, t
+from .model import decide, train
+from .scenarios import ROOT, get_scenario
+from .schemas import FlightRequest
+from .sgd import SCHEMA_ALIASES, SCHEMAS, convert
+from .vocabulary import SCENARIO_ALIASES
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    comandos = parser.add_subparsers(dest="comando", required=True)
-    comando_treino = comandos.add_parser("treinar", help="Treina a partir de um CSV rotulado")
-    comando_treino.add_argument("--dados", type=Path, default=Path("dados/exemplos.csv"))
-    comando_treino.add_argument("--modelo", type=Path, default=Path("modelos/decisor.joblib"))
-    comando_treino.add_argument("--min-df", type=int, default=1, help="Descarta termos mais raros que isso")
-    comando_decisao = comandos.add_parser("decidir", help="Escolhe a próxima ação")
-    comando_decisao.add_argument("estado", help="Texto que descreve a situação atual")
-    comando_decisao.add_argument("--modelo", type=Path, default=Path("modelos/decisor.joblib"))
-    comando_decisao.add_argument("--limiar", type=float, default=0.70)
-    comando_passagens = comandos.add_parser(
-        "avaliar-passagens", help="Filtra e ordena ofertas de uma viagem descrita em JSON"
+def build_parser(lang: str) -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="opendecision", description=t("cli_description", lang))
+    parser.add_argument("--lang", "--idioma", help=t("cli_lang", lang))
+    commands = parser.add_subparsers(dest="command", required=True)
+    scenario_help = t("cli_scenario", lang, options=", ".join(f"{s} ({pt})" for pt, s in SCENARIO_ALIASES.items()))
+
+    def command(name: str, alias: str, help_key: str):
+        sub = commands.add_parser(name, aliases=[alias], help=t(help_key, lang))
+        sub.set_defaults(command=name)
+        return sub
+
+    def scenario_argument(sub):
+        sub.add_argument("scenario", type=str, help=scenario_help)
+
+    train_cmd = command("train", "treinar", "cli_train")
+    scenario_argument(train_cmd)
+    train_cmd.add_argument("--data", "--dados", type=Path, help=t("cli_data", lang))
+    train_cmd.add_argument("--model", "--modelo", type=Path, help=t("cli_model", lang))
+    train_cmd.add_argument("--min-df", type=int, help=t("cli_min_df", lang))
+
+    decide_cmd = command("decide", "decidir", "cli_decide")
+    scenario_argument(decide_cmd)
+    decide_cmd.add_argument("state", help=t("cli_state", lang))
+    decide_cmd.add_argument("--model", "--modelo", type=Path, help=t("cli_model", lang))
+    decide_cmd.add_argument("--threshold", "--limiar", type=float, default=0.70, help=t("cli_threshold", lang))
+
+    evaluate_cmd = command("evaluate", "avaliar", "cli_evaluate")
+    scenario_argument(evaluate_cmd)
+    evaluate_cmd.add_argument("--data", "--dados", type=Path, help=t("cli_data", lang))
+    evaluate_cmd.add_argument("--test", "--teste", type=Path, help=t("cli_test", lang))
+    evaluate_cmd.add_argument(
+        "--recent-fraction", "--fracao-final", type=float, help=t("cli_recent_fraction", lang)
     )
-    comando_passagens.add_argument("cenario", type=Path)
-    comando_hf = comandos.add_parser(
-        "exportar-hf", help="Gera pasta com modelo skops e model card para o Hugging Face"
+    evaluate_cmd.add_argument("--min-df", type=int, help=t("cli_min_df", lang))
+
+    sgd_cmd = command("import-sgd", "importar-sgd", "cli_import_sgd")
+    sgd_cmd.add_argument("split", type=Path, help=t("cli_split", lang))
+    sgd_cmd.add_argument("--output", "--destino", type=Path, required=True, help=t("cli_output", lang))
+    sgd_cmd.add_argument(
+        "--schema", "--esquema", choices=SCHEMAS + tuple(SCHEMA_ALIASES), default="generic",
+        help=t("cli_schema", lang),
     )
-    comando_hf.add_argument("cenario", choices=sorted(CENARIOS))
-    comando_hf.add_argument("--destino", type=Path, help="Padrão: hf/<cenario>")
-    comando_hf.add_argument("--repo", help="Repositório no Hub, por exemplo usuario/opendecision-passagens")
-    comando_hf.add_argument("--licenca", help="Identificador de licença do Hub, por exemplo mit")
-    comando_avaliar = comandos.add_parser(
-        "avaliar", help="Mede erros por ação, calibração e efeito do limiar de revisão"
+    sgd_cmd.add_argument("--context", "--contexto", type=int, default=3, help=t("cli_context", lang))
+    sgd_cmd.add_argument("--no-state", "--sem-estado", action="store_true", help=t("cli_no_state", lang))
+
+    labels_cmd = command("export-labels", "exportar-rotulos", "cli_export_labels")
+    scenario_argument(labels_cmd)
+    labels_cmd.add_argument(
+        "--log", "--registro", type=Path, default=ROOT / "logs" / "decisions.jsonl", help=t("cli_log", lang)
     )
-    comando_avaliar.add_argument("--dados", type=Path, default=Path("dados/exemplos.csv"))
-    comando_avaliar.add_argument("--teste", type=Path, help="CSV de teste separado do treino")
-    comando_avaliar.add_argument(
-        "--fracao-final", type=float, help="Usa as últimas linhas do CSV como teste (ordem cronológica)"
-    )
-    comando_avaliar.add_argument("--min-df", type=int, default=1, help="Descarta termos mais raros que isso")
-    comando_rotulos = comandos.add_parser(
-        "exportar-rotulos", help="Converte decisões com feedback em CSV de treino"
-    )
-    comando_rotulos.add_argument("cenario", choices=sorted(CENARIOS))
-    comando_rotulos.add_argument("--registro", type=Path, default=Path("registros/decisoes.jsonl"))
-    comando_rotulos.add_argument("--destino", type=Path, help="Padrão: dados/rotulados_<cenario>.csv")
-    comando_sgd = comandos.add_parser(
-        "importar-sgd", help="Converte um split do Schema-Guided Dialogue em CSV estado,acao"
-    )
-    comando_sgd.add_argument("split", type=Path, help="Pasta train, dev ou test do SGD")
-    comando_sgd.add_argument("--destino", type=Path, required=True)
-    comando_sgd.add_argument("--esquema", choices=ESQUEMAS, default="generico")
-    comando_sgd.add_argument("--contexto", type=int, default=3, help="Turnos anteriores incluídos")
-    comando_sgd.add_argument("--sem-estado", action="store_true", help="Usa só o texto da conversa")
-    argumentos = parser.parse_args()
+    labels_cmd.add_argument("--output", "--destino", type=Path, help=t("cli_output", lang))
+
+    hf_cmd = command("export-hf", "exportar-hf", "cli_export_hf")
+    scenario_argument(hf_cmd)
+    hf_cmd.add_argument("--output", "--destino", type=Path, help=t("cli_output", lang))
+    hf_cmd.add_argument("--repo", help=t("cli_repo", lang))
+    hf_cmd.add_argument("--license", "--licenca", help=t("cli_license", lang))
+
+    flights_cmd = command("rank-flights", "avaliar-passagens", "cli_rank_flights")
+    flights_cmd.add_argument("trip", type=Path, help=t("cli_trip", lang))
+    return parser
+
+
+def run(args: argparse.Namespace, lang: str) -> dict:
+    if args.command == "import-sgd":
+        return convert(args.split, args.output, args.schema, args.context, not args.no_state)
+    if args.command == "rank-flights":
+        trip = FlightRequest.model_validate(json.loads(args.trip.read_text(encoding="utf-8")))
+        return rank_flights(trip.model_dump(exclude_none=True), lang)
+
+    scenario = get_scenario(args.scenario)
+    if args.command == "train":
+        min_df = args.min_df or scenario.min_df
+        return train(args.data or scenario.data, args.model or scenario.model, min_df, lang)
+    if args.command == "decide":
+        return decide(args.model or scenario.model, args.state, args.threshold)
+    if args.command == "evaluate":
+        data = args.data or scenario.data
+        test = args.test or (scenario.test if args.data is None and args.recent_fraction is None else None)
+        return evaluate(data, test, args.recent_fraction, args.min_df or scenario.min_df, lang)
+    if args.command == "export-labels":
+        output = args.output or ROOT / "data" / f"labeled_{scenario.name}.csv"
+        return export_labels(args.log, output, scenario.name)
+    output = args.output or ROOT / "hf" / scenario.name
+    return export(scenario.name, output, args.repo, args.license)
+
+
+def main(argv: list[str] | None = None) -> None:
+    argv = sys.argv[1:] if argv is None else argv
+    early = argparse.ArgumentParser(add_help=False)
+    early.add_argument("--lang", "--idioma")
+    lang = resolve_language(early.parse_known_args(argv)[0].lang)
+
+    parser = build_parser(lang)
+    args = parser.parse_args(argv)
     try:
-        if argumentos.comando == "treinar":
-            resultado = treinar(argumentos.dados, argumentos.modelo, argumentos.min_df)
-        elif argumentos.comando == "decidir":
-            resultado = decidir(argumentos.modelo, argumentos.estado, argumentos.limiar)
-        elif argumentos.comando == "avaliar":
-            resultado = avaliar(
-                argumentos.dados, argumentos.teste, argumentos.fracao_final, argumentos.min_df
-            )
-        elif argumentos.comando == "exportar-rotulos":
-            destino = argumentos.destino or Path("dados") / f"rotulados_{argumentos.cenario}.csv"
-            resultado = exportar_rotulos(argumentos.registro, destino, argumentos.cenario)
-        elif argumentos.comando == "importar-sgd":
-            resultado = converter(
-                argumentos.split, argumentos.destino, argumentos.esquema,
-                argumentos.contexto, not argumentos.sem_estado,
-            )
-        elif argumentos.comando == "exportar-hf":
-            destino = argumentos.destino or Path("hf") / argumentos.cenario
-            resultado = exportar(argumentos.cenario, destino, argumentos.repo, argumentos.licenca)
-        else:
-            cenario = json.loads(argumentos.cenario.read_text(encoding="utf-8"))
-            resultado = avaliar_passagens(cenario)
-    except (ValueError, FileNotFoundError) as erro:
-        parser.error(str(erro))
-    print(json.dumps(resultado, ensure_ascii=False, indent=2))
+        result = run(args, lang)
+    except LocalizedError as error:
+        parser.error(error.message(lang))
+    except (ValidationError, FileNotFoundError) as error:
+        parser.error(str(error))
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+

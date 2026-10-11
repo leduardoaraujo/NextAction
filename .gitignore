@@ -1,10 +1,11 @@
 .venv/
 __pycache__/
-modelos/
-clients/rust/target/
-hf/
-registros/
-dados/rotulados_*.csv
-dados/externos/
 *.egg-info/
 build/
+clients/rust/target/
+models/
+logs/
+hf/
+data/external/
+data/labeled_*.csv
+.vscode/

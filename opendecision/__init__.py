@@ -1,1 +1,1 @@
-"""Modelo local para sugerir a próxima ação de um agente."""
+"""Predict an AI agent's next action, with probabilities and a human-review threshold."""

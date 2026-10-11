@@ -1,4 +1,4 @@
-"""Exportação do classificador para o Hugging Face Hub."""
+"""Export to the Hugging Face Hub."""
 
 import tempfile
 import unittest
@@ -6,28 +6,29 @@ from pathlib import Path
 
 import skops.io as sio
 
-from opendecision.hub import exportar
+from opendecision.hub import export
+from opendecision.i18n import LocalizedError
 
 
-class ExportarTest(unittest.TestCase):
-    def test_gera_modelo_skops_carregavel_e_model_card(self):
-        with tempfile.TemporaryDirectory() as pasta:
-            destino = Path(pasta) / "passagens"
-            resultado = exportar("passagens", destino, repo="usuario/teste", licenca="mit")
+class ExportTest(unittest.TestCase):
+    def test_writes_loadable_skops_model_and_model_card(self):
+        with tempfile.TemporaryDirectory() as folder:
+            destination = Path(folder) / "flights"
+            result = export("passagens", destination, repo="user/test", license_id="mit")
 
-            self.assertEqual(resultado["arquivos"], ["README.md", "dados_treino.csv", "model.skops"])
-            modelo = sio.load(destino / "model.skops")
-            estado = "Tenho origem GRU destino REC ida 12/11 e ainda não consultei voos"
-            self.assertEqual(modelo.predict([estado])[0], "buscar_voos")
+            self.assertEqual(result["files"], ["README.md", "model.skops", "training_data.csv"])
+            model = sio.load(destination / "model.skops")
+            state = "Tenho origem GRU destino REC ida 12/11 e ainda não consultei voos"
+            self.assertEqual(model.predict([state])[0], "search")
 
-            card = (destino / "README.md").read_text(encoding="utf-8")
-            self.assertTrue(card.startswith("---\nlanguage: pt\n"))
+            card = (destination / "README.md").read_text(encoding="utf-8")
+            self.assertTrue(card.startswith("---\nlanguage: [pt]\n"))
             self.assertIn("license: mit", card)
-            self.assertIn('hf_hub_download("usuario/teste", "model.skops")', card)
+            self.assertIn('hf_hub_download("user/test", "model.skops")', card)
 
-    def test_rejeita_cenario_desconhecido(self):
-        with tempfile.TemporaryDirectory() as pasta, self.assertRaisesRegex(ValueError, "Cenário"):
-            exportar("hoteis", Path(pasta))
+    def test_rejects_unknown_scenario(self):
+        with tempfile.TemporaryDirectory() as folder, self.assertRaises(LocalizedError):
+            export("hotels", Path(folder))
 
 
 if __name__ == "__main__":

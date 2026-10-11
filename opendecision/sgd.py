@@ -1,8 +1,8 @@
-"""Converte o Schema-Guided Dialogue (Google, CC BY-SA 4.0) em exemplos ``estado,acao``.
+"""Convert the Schema-Guided Dialogue dataset (Google, CC BY-SA 4.0) into ``state,action`` examples.
 
-Cada turno do assistente vira um exemplo: o estado é a conversa até ali, mais o estado do
-diálogo (intenção, campos preenchidos e obrigatórios que faltam), e a ação é o que o
-assistente fez. Os atos do SGD são agrupados em ações genéricas de um agente.
+Every assistant turn becomes one example. The state is the conversation so far plus the
+dialogue state (intent, filled slots, required slots still missing), and the action is what
+the assistant did, grouped into generic agent actions.
 """
 
 import csv
@@ -10,98 +10,96 @@ import json
 from collections import Counter
 from pathlib import Path
 
+from .i18n import LocalizedError
 
-# Ordem de prioridade quando um turno tem vários atos.
-ACOES_GENERICAS = {
-    "NOTIFY_SUCCESS": "executar",
-    "NOTIFY_FAILURE": "executar",
-    "CONFIRM": "confirmar",
-    "REQUEST": "perguntar",
-    "OFFER_INTENT": "sugerir_proxima_etapa",
-    "OFFER": "apresentar_opcao",
-    "INFORM_COUNT": "apresentar_opcao",
-    "INFORM": "responder",
-    "REQ_MORE": "oferecer_mais_ajuda",
-    "GOODBYE": "encerrar",
+# Priority order when a turn has several acts.
+GENERIC_ACTIONS = {
+    "NOTIFY_SUCCESS": "execute",
+    "NOTIFY_FAILURE": "execute",
+    "CONFIRM": "confirm",
+    "REQUEST": "ask",
+    "OFFER_INTENT": "suggest_next_step",
+    "OFFER": "present_options",
+    "INFORM_COUNT": "present_options",
+    "INFORM": "answer",
+    "REQ_MORE": "offer_more_help",
+    "GOODBYE": "end_conversation",
 }
-PARA_PASSAGENS = {
-    "perguntar": "perguntar_dados",
-    "buscar": "buscar_voos",
-    "apresentar_opcao": "apresentar_opcoes",
-    "confirmar": "pedir_confirmacao",
-}
-ESQUEMAS = ("generico", "passagens")
+FLIGHT_ACTIONS = {"ask", "search", "present_options", "confirm"}
+SCHEMAS = ("generic", "flights")
+SCHEMA_ALIASES = {"generico": "generic", "passagens": "flights"}
 
 
-def acao_do_turno(turno: dict) -> str | None:
-    atos = {acao["act"] for frame in turno["frames"] for acao in frame["actions"]}
-    busca = any(
-        "service_call" in frame and not atos & {"NOTIFY_SUCCESS", "NOTIFY_FAILURE"}
-        for frame in turno["frames"]
+def turn_action(turn: dict) -> str | None:
+    acts = {action["act"] for frame in turn["frames"] for action in frame["actions"]}
+    queried = any(
+        "service_call" in frame and not acts & {"NOTIFY_SUCCESS", "NOTIFY_FAILURE"}
+        for frame in turn["frames"]
     )
-    if busca:
-        # O assistente consultou o serviço antes de responder: a decisão foi buscar.
-        return "buscar"
-    return next((acao for ato, acao in ACOES_GENERICAS.items() if ato in atos), None)
+    if queried:
+        # The assistant called the service before replying: the decision was to search.
+        return "search"
+    return next((action for act, action in GENERIC_ACTIONS.items() if act in acts), None)
 
 
-def descrever_estado(historico: list[dict], obrigatorios: dict, contexto: int, com_estado: bool) -> str:
-    partes = []
-    ultimo_usuario = next((t for t in reversed(historico) if t["speaker"] == "USER"), None)
-    if com_estado and ultimo_usuario:
-        for frame in ultimo_usuario["frames"]:
-            estado = frame.get("state")
-            if not estado or estado["active_intent"] == "NONE":
+def describe_state(history: list[dict], required: dict, context: int, with_state: bool) -> str:
+    parts = []
+    last_user = next((turn for turn in reversed(history) if turn["speaker"] == "USER"), None)
+    if with_state and last_user:
+        for frame in last_user["frames"]:
+            state = frame.get("state")
+            if not state or state["active_intent"] == "NONE":
                 continue
-            intencao = estado["active_intent"]
-            preenchidos = sorted(estado["slot_values"])
-            faltando = [c for c in obrigatorios.get((frame["service"], intencao), []) if c not in preenchidos]
-            partes.append(
-                f"[intencao {intencao}] [preenchidos {' '.join(preenchidos) or 'nenhum'}] "
-                f"[faltando {' '.join(faltando) or 'nenhum'}] "
-                f"[pedidos {' '.join(estado['requested_slots']) or 'nenhum'}]"
+            intent = state["active_intent"]
+            filled = sorted(state["slot_values"])
+            missing = [slot for slot in required.get((frame["service"], intent), []) if slot not in filled]
+            parts.append(
+                f"[intent {intent}] [filled {' '.join(filled) or 'none'}] "
+                f"[missing {' '.join(missing) or 'none'}] "
+                f"[requested {' '.join(state['requested_slots']) or 'none'}]"
             )
-    for turno in historico[-contexto:]:
-        quem = "usuario" if turno["speaker"] == "USER" else "assistente"
-        partes.append(f"{quem}: {turno['utterance']}")
-    return " || ".join(partes)
+    for turn in history[-context:]:
+        speaker = "user" if turn["speaker"] == "USER" else "assistant"
+        parts.append(f"{speaker}: {turn['utterance']}")
+    return " || ".join(parts)
 
 
-def converter(
-    pasta_split: Path, destino: Path, esquema: str = "generico",
-    contexto: int = 3, com_estado: bool = True,
+def convert(
+    split_dir: Path, destination: Path, schema: str = "generic",
+    context: int = 3, with_state: bool = True,
 ) -> dict:
-    if esquema not in ESQUEMAS:
-        raise ValueError(f"Esquema desconhecido: {esquema}. Use {', '.join(ESQUEMAS)}.")
-    arquivos = sorted(pasta_split.glob("dialogues_*.json"))
-    if not arquivos:
-        raise FileNotFoundError(f"Nenhum dialogues_*.json em {pasta_split}.")
-    esquema_servicos = json.loads((pasta_split / "schema.json").read_text(encoding="utf-8"))
-    obrigatorios = {
-        (servico["service_name"], intencao["name"]): intencao["required_slots"]
-        for servico in esquema_servicos for intencao in servico["intents"]
+    schema = SCHEMA_ALIASES.get(schema, schema)
+    if schema not in SCHEMAS:
+        raise LocalizedError("unknown_schema", name=schema, options=", ".join(SCHEMAS))
+    files = sorted(split_dir.glob("dialogues_*.json"))
+    if not files:
+        raise LocalizedError("sgd_no_dialogues", path=split_dir)
+    services = json.loads((split_dir / "schema.json").read_text(encoding="utf-8"))
+    required = {
+        (service["service_name"], intent["name"]): intent["required_slots"]
+        for service in services for intent in service["intents"]
     }
 
-    contagem = Counter()
-    destino.parent.mkdir(parents=True, exist_ok=True)
-    with destino.open("w", encoding="utf-8", newline="") as saida:
-        escritor = csv.writer(saida)
-        escritor.writerow(["estado", "acao", "dialogo"])
-        for arquivo in arquivos:
-            for dialogo in json.loads(arquivo.read_text(encoding="utf-8")):
-                if esquema == "passagens" and not any(s.startswith("Flights") for s in dialogo["services"]):
+    counts = Counter()
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with destination.open("w", encoding="utf-8", newline="") as output:
+        writer = csv.writer(output)
+        writer.writerow(["state", "action", "dialogue"])
+        for path in files:
+            for dialogue in json.loads(path.read_text(encoding="utf-8")):
+                if schema == "flights" and not any(s.startswith("Flights") for s in dialogue["services"]):
                     continue
-                turnos = dialogo["turns"]
-                for indice, turno in enumerate(turnos):
-                    if turno["speaker"] != "SYSTEM" or indice == 0:
+                turns = dialogue["turns"]
+                for index, turn in enumerate(turns):
+                    if turn["speaker"] != "SYSTEM" or index == 0:
                         continue
-                    acao = acao_do_turno(turno)
-                    if esquema == "passagens":
-                        voos = all(f["service"].startswith("Flights") for f in turno["frames"])
-                        acao = PARA_PASSAGENS.get(acao) if voos else None
-                    if acao is None:
+                    action = turn_action(turn)
+                    if schema == "flights":
+                        flight_turn = all(f["service"].startswith("Flights") for f in turn["frames"])
+                        action = action if flight_turn and action in FLIGHT_ACTIONS else None
+                    if action is None:
                         continue
-                    estado = descrever_estado(turnos[:indice], obrigatorios, contexto, com_estado)
-                    escritor.writerow([estado, acao, dialogo["dialogue_id"]])
-                    contagem[acao] += 1
-    return {"arquivo": str(destino), "exemplos": sum(contagem.values()), "por_acao": dict(contagem.most_common())}
+                    state = describe_state(turns[:index], required, context, with_state)
+                    writer.writerow([state, action, dialogue["dialogue_id"]])
+                    counts[action] += 1
+    return {"file": str(destination), "examples": sum(counts.values()), "per_action": dict(counts.most_common())}
