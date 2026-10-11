@@ -1,146 +1,147 @@
 # OpenDecision
 
-Primeiro passo de um modelo de decisão inspirado na **interface** do Jev: receber um estado, escolher uma ação definida e devolver probabilidades. Este protótipo treina um classificador de texto local. Ele não reproduz a arquitetura nem o treinamento RLCD do Jev.
+**A small, auditable next-action model for AI agents.** Given the current state of a conversation, OpenDecision predicts what the agent should do next (ask, search, present, confirm, execute, close) with a probability for every action and a threshold that sends uncertain cases to a human.
 
-## Estrutura
+[![CI](https://github.com/leduardoaraujo/OpenDecision/actions/workflows/ci.yml/badge.svg)](https://github.com/leduardoaraujo/OpenDecision/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?logo=scikitlearn&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![Rust client](https://img.shields.io/badge/client-Rust-000000?logo=rust)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-- `opendecision/dados.py`: lê e valida os exemplos em CSV.
-- `opendecision/modelo.py`: treina, avalia e usa o classificador.
-- `opendecision/passagens.py`: aplica restrições e ordena ofertas fictícias.
-- `opendecision/api.py` e `api_schemas.py`: expõem contratos HTTP e validação JSON.
-- `opendecision/cli.py`: recebe os comandos e imprime o resultado.
-- `clients/rust/`: cliente de terminal em Rust que consome a API.
-- `main.py`: entrada mantida para os comandos existentes; `python -m opendecision` também funciona.
-- `dados/`: exemplos rotulados; `cenarios/`: descrição dos cenários.
+```text
+state  →  [intencao SearchOnewayFlight] [preenchidos origin_airport] [faltando destination_airport departure_date]
+          || usuario: I need a flight from Boston.
+action →  perguntar (0.99)   ✓ automatic, above the 0.9 review threshold
+```
 
-## Passo 1: definir a decisão
+## Why
 
-O exemplo responde: **qual deve ser a próxima ação de um agente de pesquisa?** As ações possíveis são `pesquisar`, `perguntar` e `responder`. O modelo escolhe uma delas; o código que executa a ação fica separado.
+LLM agents rarely fail at writing sentences; they fail at **control flow**: searching before they know the destination, booking without confirmation, answering when they should ask. OpenDecision isolates that decision into a model that is:
 
-## Passo 2: reunir exemplos
+- **Explicit**: a fixed set of actions, so every choice can be logged, counted and tested.
+- **Calibrated for hand-off**: each prediction carries probabilities, and a threshold decides what is automated and what goes to review.
+- **Improvable from use**: every API decision gets an id; corrections sent back become training data.
+- **Cheap**: TF-IDF + logistic regression. Trains on a laptop, predicts in milliseconds, ships as a few-MB file.
 
-O arquivo `dados/exemplos.csv` contém duas colunas: `estado` descreve o que o agente sabe no momento e `acao` é a escolha correta. Substitua os exemplos fictícios por decisões reais revisadas por você. Cada modelo aprende um conjunto fixo de ações.
+The interface (state in, one defined action out, with probabilities) is inspired by [Jev's System One models](https://typesafe.ai/blog/introducing-system-one-models-and-jev). This project does not reproduce Jev's architecture or its RLCD training.
 
-## Passo 3: instalar e treinar
+## Results
 
-No PowerShell:
+The generic `agente` model is trained on the [Schema-Guided Dialogue](https://github.com/google-research-datasets/dstc8-schema-guided-dialogue) dataset (165k assistant turns, 20 domains) and evaluated on its official test split, which includes **services never seen during training** (42k turns).
 
-```powershell
+| Input | Accuracy | Automated at 0.9 threshold | Accuracy when automated |
+| --- | --- | --- | --- |
+| Conversation + dialogue state | **0.90** | 50.0% | **99.6%** |
+| Conversation only¹ | 0.77 | 28.9% | 96.8% |
+| Always the most frequent action | 0.21 | | |
+
+¹ Ablation run with the full vocabulary (`min_df=1`); the published model uses `min_df=5` and is 4.7 MB.
+
+Adding the dialogue state (which required fields are still missing) is what moves the needle: F1 for `perguntar` (ask) goes from 0.71 to 0.97. Full per-action metrics, calibration and threshold curves are in [docs/sgd-model.md](docs/sgd-model.md).
+
+## How it works
+
+```mermaid
+flowchart LR
+    SGD[(Schema-Guided<br/>Dialogue)] -->|importar-sgd| CSV[labeled CSV<br/>estado, acao]
+    CSV -->|treinar · avaliar| M[TF-IDF +<br/>logistic regression]
+    Agent[Agent or app] -->|state| API[FastAPI<br/>/v1/actions/decide]
+    API <--> M
+    API -->|action + probabilities| Agent
+    API -->|below threshold| Human[Human review]
+    API --> Log[(decision log)]
+    Human -->|/v1/decisions/id/feedback| Log
+    Log -->|exportar-rotulos| CSV
+    M -->|exportar-hf| Hub[Hugging Face Hub]
+```
+
+1. **Data**: labeled `estado,acao` pairs, either written by hand, imported from public dialogue data or exported from real decisions with feedback.
+2. **Evaluation first**: `avaliar` reports per-action errors, the confusion matrix, calibration error and how many decisions each threshold would automate, compared against a majority-class baseline.
+3. **Serving**: a FastAPI service returns the action, the probabilities and `pedir_revisao` (needs review). A typed Rust CLI consumes the same contract.
+4. **Learning loop**: decisions and corrections are appended to a JSONL log and turned back into training data in chronological order.
+5. **Publishing**: models are exported in the safe [skops](https://skops.readthedocs.io/) format (no pickle) with a generated model card.
+
+## Quickstart
+
+```bash
 python -m venv .venv
-.\.venv\Scripts\python -m pip install -r requirements.txt
-.\.venv\Scripts\python -m opendecision treinar
+source .venv/bin/activate            # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+
+python -m opendecision treinar --dados dados/passagens.csv --modelo modelos/passagens.joblib
+python -m opendecision decidir "Tenho origem GRU destino REC ida 12/11 e ainda não consultei voos" \
+  --modelo modelos/passagens.joblib
 ```
 
-O texto é transformado em características TF-IDF e usado para treinar uma regressão logística. O comando salva o modelo em `modelos/decisor.joblib`.
-
-## Passo 4: pedir uma decisão
-
-```powershell
-.\.venv\Scripts\python -m opendecision decidir "Preciso saber a cotação de hoje e ainda não consultei nenhuma fonte"
+```json
+{
+  "tipo": "escolha",
+  "proxima_acao": "buscar_voos",
+  "probabilidades_estimadas": { "apresentar_opcoes": 0.1922, "buscar_voos": 0.4163, "pedir_confirmacao": 0.183, "perguntar_dados": 0.2085 },
+  "pedir_revisao": true
+}
 ```
 
-A saída traz a ação escolhida, a probabilidade estimada de cada ação e `pedir_revisao`. Por padrão, `pedir_revisao` é verdadeiro quando a maior probabilidade fica abaixo de `0.70`. Ajuste com `--limiar 0.80`.
+The bundled Portuguese scenarios are tiny and synthetic, so the model is unsure and asks for review. To train the generic model on real dialogues, follow [docs/sgd-model.md](docs/sgd-model.md). To serve it over HTTP:
 
-## Passo 5: avaliar antes de automatizar
-
-Os 24 exemplos incluídos são somente uma demonstração. A acurácia sobre poucos casos não mede desempenho real. As probabilidades da regressão logística não são automaticamente calibradas. Para um agente real, separe dados históricos de avaliação, meça erros por tipo de ação e calibre as probabilidades e o limiar com dados independentes. O arquivo `joblib` só deve ser aberto se foi treinado por você.
-
-Próximos passos: adaptar ações e estados ao seu agente, montar avaliação confiável, adicionar ações permitidas por contexto e expor a decisão por API.
-
-## Cenário de passagens aéreas
-
-Veja [o cenário de passagens](cenarios/passagens.md) e os exemplos em `dados/passagens.csv`. Para treinar esse modelo separado:
-
-```powershell
-.\.venv\Scripts\python -m opendecision treinar --dados dados/passagens.csv --modelo modelos/passagens.joblib
+```bash
+uvicorn opendecision.api:app --reload    # then open http://127.0.0.1:8000/docs
 ```
 
-Para experimentar uma decisão com orçamento, bagagem e preferência por preço, duração e escalas:
+## Features
 
-```powershell
-.\.venv\Scripts\python -m opendecision avaliar-passagens dados/viagem_exemplo.json
+| | |
+| --- | --- |
+| **Scenarios** | `agente` (generic, English, real dialogues), `passagens` (flight booking, Portuguese), `pesquisa` (research agent, Portuguese) |
+| **CLI** | `treinar`, `decidir`, `avaliar`, `importar-sgd`, `exportar-rotulos`, `exportar-hf`, `avaliar-passagens` |
+| **REST API** | decide, feedback, flight-offer ranking, model status; OpenAPI docs at `/docs` |
+| **Evaluation** | cross-validation, separate test set or most-recent slice; per-action F1, confusion matrix, ECE, threshold table |
+| **Rule-based ranker** | filters and ranks flight offers by budget, baggage, stops, price and duration, with explanations |
+| **Clients** | typed Rust CLI (`clients/rust`) |
+| **Distribution** | skops export plus generated Hugging Face model card |
+
+## Repository layout
+
+```text
+opendecision/
+  modelo.py        training and inference (TF-IDF + logistic regression)
+  avaliacao.py     evaluation report: per-action metrics, calibration, thresholds
+  sgd.py           Schema-Guided Dialogue → estado,acao converter
+  registro.py      append-only decision log and feedback export
+  api.py           FastAPI service · api_schemas.py: request/response contracts
+  hub.py           skops export and model card generation
+  passagens.py     rule-based flight offer filter and ranker
+  cli.py           command line entry point
+clients/rust/      Rust client for the REST API
+dados/             bundled synthetic examples (external data goes to dados/externos/, git-ignored)
+docs/              detailed documentation
+tests/             unit tests (python -m unittest discover -s tests)
 ```
 
-Essa avaliação usa regras e uma pontuação explícita; ainda não aprende a preferência entre voos. Veja os detalhes e limites no cenário.
+## Documentation
 
-## API REST e cliente Rust
+- [Generic agent model on Schema-Guided Dialogue](docs/sgd-model.md): data mapping, state format, results, ablation
+- [Evaluation](docs/evaluation.md): what each metric means and how to choose a threshold
+- [REST API, feedback loop and Rust client](docs/api.md)
+- [Publishing to Hugging Face](docs/hugging-face.md)
+- [Flight booking scenario](cenarios/passagens.md) (in Portuguese)
 
-Instale as dependências e treine os modelos de demonstração na raiz do projeto. **Terminal 1:** inicie o servidor e deixe esse terminal aberto:
+## Limitations
 
-```powershell
-.\.venv\Scripts\python -m pip install -r requirements.txt
-.\.venv\Scripts\python -m opendecision treinar
-.\.venv\Scripts\python -m opendecision treinar --dados dados/passagens.csv --modelo modelos/passagens.joblib
-.\.venv\Scripts\python -m uvicorn opendecision.api:app --reload
-```
+- The model matches word patterns. It does not verify facts or enforce business rules; the calling app must check preconditions before acting.
+- Probabilities are not calibrated (expected calibration error ≈ 0.08 on SGD). Pick thresholds from the evaluation table, not from intuition.
+- SGD conversations were written by crowd workers from simulated scripts, so real users will be messier. Measure on your own logged decisions before automating.
+- The `agente` model is English-only; the Portuguese scenarios use small synthetic datasets for demonstration.
+- Never execute irreversible actions (payments, bookings) from a prediction alone.
 
-Com o servidor aberto, consulte `http://127.0.0.1:8000/docs` para experimentar os endpoints e ver o contrato OpenAPI. No Terminal 2, `Invoke-RestMethod http://127.0.0.1:8000/health` deve retornar `status: ok` antes de rodar o cliente.
+## Roadmap
 
-| Método | Rota | Uso |
-| --- | --- | --- |
-| `GET` | `/health` | Verifica se o servidor responde. |
-| `GET` | `/v1/models` | Mostra quais modelos locais foram treinados. |
-| `POST` | `/v1/actions/decide` | Escolhe a próxima ação para `pesquisa` ou `passagens`. |
-| `POST` | `/v1/flights/evaluate` | Aplica critérios e ordena ofertas informadas no corpo JSON. |
+- [ ] Multilingual sentence embeddings, so the SGD-trained model also serves Portuguese states
+- [ ] Probability calibration (`CalibratedClassifierCV`) with thresholds tuned to error costs
+- [ ] Context-dependent action masks (actions allowed per state)
+- [ ] Learning from outcomes (contextual bandits) once enough feedback is logged
 
-**Terminal 2:** com [Rust instalado](https://rust-lang.org/tools/install/), execute o cliente enquanto o servidor do Terminal 1 continua ativo:
+## License and data
 
-```powershell
-cargo run --manifest-path clients/rust/Cargo.toml -- flights dados/viagem_exemplo.json
-cargo run --manifest-path clients/rust/Cargo.toml -- action passagens "Tenho origem GRU destino REC e ainda não consultei voos"
-```
-
-O cliente usa `http://127.0.0.1:8000` por padrão. Defina `OPENDECISION_API_URL` para outro endereço. A API devolve `503` se o classificador solicitado ainda não foi treinado. A avaliação de ofertas usa os dados enviados; não pesquisa preços nem emite passagens.
-
-Para executar os testes Python:
-
-```powershell
-.\.venv\Scripts\python -m pip install -r requirements-dev.txt
-.\.venv\Scripts\python -m unittest discover -s tests -v
-```
-
-## Coletar decisões reais e avaliar
-
-Para aprender com casos reais, cada resposta de `POST /v1/actions/decide` traz um `decisao_id`. A API guarda o estado recebido, a ação sugerida e as probabilidades em `registros/decisoes.jsonl`. Quando uma pessoa ou o agente souber qual ação deveria ter sido tomada, informe essa ação:
-
-```powershell
-Invoke-RestMethod -Method Post http://127.0.0.1:8000/v1/decisions/<decisao_id>/feedback `
-  -ContentType "application/json" -Body '{"acao_final": "pedir_confirmacao", "comentario": "o viajante já tinha escolhido"}'
-```
-
-A `acao_final` pode ser uma ação que o modelo ainda não conhece; assim aparecem ações que faltam. Os estados podem conter dados pessoais: o arquivo fica fora do git e pode ser desativado com `$env:OPENDECISION_REGISTRO = ""` antes de iniciar o servidor.
-
-Transforme as decisões revisadas em CSV de treino (ordem cronológica) e avalie:
-
-```powershell
-.\.venv\Scripts\python -m opendecision exportar-rotulos passagens
-.\.venv\Scripts\python -m opendecision avaliar --dados dados/rotulados_passagens.csv --fracao-final 0.2
-```
-
-`avaliar` usa validação cruzada por padrão, `--teste` para um CSV separado ou `--fracao-final` para testar nos casos mais recentes, que é o mais próximo do uso futuro. O relatório mostra acurácia contra a classe majoritária, precisão e revocação por ação, matriz de confusão, erro de calibração e, para cada limiar, quantas decisões seriam automáticas, quantos erros passariam sem revisão e quantas iriam para revisão. Escolha o limiar pelo custo dos erros, não pela acurácia geral.
-
-Na base sintética de passagens, a validação cruzada dá 0,50 de acurácia e nenhuma previsão chega a 0,50 de confiança: com o limiar padrão, tudo iria para revisão.
-
-## Publicar no Hugging Face
-
-O comando `exportar-hf` treina o cenário a partir do CSV e gera uma pasta pronta para o Hub: `model.skops`, `dados_treino.csv` e `README.md` (model card com metadados). O formato [skops](https://skops.readthedocs.io/) evita publicar pickle: quem baixa o modelo não executa código arbitrário ao carregá-lo.
-
-```powershell
-.\.venv\Scripts\python -m pip install -r requirements-hf.txt
-.\.venv\Scripts\python -m opendecision exportar-hf passagens --repo seu-usuario/opendecision-passagens --licenca mit
-```
-
-Revise `hf/passagens/README.md` e depois envie a pasta com um token de escrita:
-
-```powershell
-.\.venv\Scripts\hf auth login
-.\.venv\Scripts\hf upload seu-usuario/opendecision-passagens hf/passagens . --repo-type model
-```
-
-Troque `passagens` por `pesquisa` para o outro classificador. A pasta `hf/` fica fora do git.
-
-## Referências
-
-- [Apresentação oficial do Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev)
-- [Documentação oficial da API](https://api.typesafe.ai/redoc)
-- [Documentação do scikit-learn para calibração](https://scikit-learn.org/stable/modules/calibration.html)
+Code: [MIT](LICENSE). The Schema-Guided Dialogue dataset is © Google, released under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), and is not redistributed here; models trained on it are published under the same license. If you use the dataset, cite Rastogi et al., *Towards Scalable Multi-domain Conversational Agents: The Schema-Guided Dialogue Dataset* (AAAI 2020).
