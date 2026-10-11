@@ -48,6 +48,13 @@ class Scenario:
     dataset_id: str | None = None
     dataset_name: str | None = None
     citation: str | None = None
+    demo: str | None = None          # repository folder with the scripts that build states
+    media: Path | None = None        # GIF or image shown on the model card
+    demo_summary: str | None = None
+    direct_use: str | None = None
+    out_of_scope: str | None = None
+    risk: str | None = None
+    action_descriptions: dict = field(default_factory=dict)
     params: ModelParams = ModelParams()
     tuning: dict = field(default_factory=dict)
     policy: Policy = Policy()
@@ -84,6 +91,10 @@ def load_scenario(path: Path) -> Scenario:
             ship_data=bool(info.get("ship_data", True)), config_path=path,
             input_format=info.get("input", "text"), dataset_id=info.get("dataset_id"),
             dataset_name=info.get("dataset_name"), citation=info.get("citation"),
+            demo=info.get("demo"), media=ROOT / info["media"] if info.get("media") else None,
+            demo_summary=info.get("demo_summary"), direct_use=info.get("direct_use"),
+            out_of_scope=info.get("out_of_scope"), risk=info.get("risk"),
+            action_descriptions=info.get("actions", {}),
             params=model_params(config.get("model", {})),
             tuning=config.get("tuning", {}),
             policy=from_dict(config.get("policy", {})),

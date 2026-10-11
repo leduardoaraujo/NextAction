@@ -37,6 +37,8 @@ def export(name: str, destination: Path, repo: str | None = None, license_id: st
         shutil.copyfile(scenario.data, destination / DATA_FILE)
     # The scenario config carries the decision policy the card documents.
     shutil.copyfile(scenario.config_path, destination / CONFIG_FILE)
+    if scenario.media:
+        shutil.copyfile(scenario.media, destination / scenario.media.name)
     report["model_bytes"] = (destination / MODEL_FILE).stat().st_size
     card = model_card(
         scenario, list(model.classes_), report,
@@ -94,7 +96,8 @@ def model_card(scenario: Scenario, actions: list[str], report: dict, repo: str, 
         f"    - {{type: f1, value: {macro_f1}, name: Macro F1}}",
     ]
     example = json.dumps(scenario.example, ensure_ascii=False)
-    action_rows = "\n".join(f"| `{a}` | {ACTION_DESCRIPTIONS.get(a, '')} |" for a in actions)
+    descriptions = {**ACTION_DESCRIPTIONS, **scenario.action_descriptions}
+    action_rows = "\n".join(f"| `{a}` | {descriptions.get(a, '')} |" for a in actions)
     per_action = "\n".join(
         f"| `{action}` | {m['precision']} | {m['recall']} | {m['f1']} | {m['support']} |"
         for action, m in report["per_action"].items()
@@ -134,17 +137,41 @@ which the NextAction package applies before predicting."""
         input_section = f"""## Input format
 
 A free-text description of the current situation in {languages}, for example {example}."""
+        if scenario.demo:
+            input_section += (
+                "\n\nStates are built by `features.describe()` in the "
+                f"[{scenario.demo}](https://github.com/leduardoaraujo/NextAction/tree/main/{scenario.demo}) folder; "
+                "use it to turn a position into the text this model expects."
+            )
     data_citation = (
         "\n\nTraining data:\n\n```bibtex\n" + scenario.citation + "\n```" if scenario.citation else ""
     )
-    risk_data = (
+    risk_data = scenario.risk or (
         "The training conversations were written by crowd workers from simulated outlines in 20 service "
         "domains, so real users will be messier and other domains less accurate."
         if scenario.input_format == "tagged" else
         "The training data is small and synthetic; treat this model as a demonstration of the pipeline, "
         "not as a production model."
     )
-    size_mb = report.get("model_bytes", 0) / 1e6
+    size_bytes = report.get("model_bytes", 0)
+    size = f"{size_bytes / 1e6:.1f} MB" if size_bytes >= 1e6 else f"{size_bytes / 1e3:.0f} kB"
+    direct_use = scenario.direct_use or (
+        "Decide the next step of a conversational agent (ask, search, present options, confirm, execute, "
+        "end the conversation), route uncertain decisions to human review, and log decisions with feedback "
+        "to collect training data."
+    )
+    out_of_scope = scenario.out_of_scope or (
+        "Executing irreversible actions (payments, bookings) from a prediction alone, domains far from the "
+        "training data without re-evaluating, and any use as a source of facts: the model chooses an action, "
+        "it does not generate or verify content."
+    )
+    demo_section = ""
+    if scenario.media or scenario.demo_summary:
+        demo_link = (f" Scripts, benchmark and analysis: "
+                     f"[{scenario.demo}](https://github.com/leduardoaraujo/NextAction/tree/main/{scenario.demo})."
+                     if scenario.demo else "")
+        image = f"![{scenario.name} demo]({scenario.media.name})\n\n" if scenario.media else ""
+        demo_section = f"\n## Demo\n\n{image}{scenario.demo_summary or ''}{demo_link}\n"
     return f"""---
 {chr(10).join(metadata)}
 ---
@@ -155,7 +182,7 @@ A small, auditable classifier that predicts **{scenario.decision}**. Given the c
 one action from a fixed vocabulary with a probability for each, so an agent can act alone when it is
 confident and hand the decision to a person when it is not. It ships with a decision policy
 (`{CONFIG_FILE}`) that blocks impossible actions and sets a minimum confidence per action.
-
+{demo_section}
 ## Model details
 
 | | |
@@ -165,18 +192,14 @@ confident and hand the decision to a person when it is not. It ships with a deci
 | Task | next-action prediction for task-oriented agents (text classification) |
 | Language | {languages} |
 | License | {license_id or "not specified"} |
-| Size | {size_mb:.1f} MB |
+| Size | {size} |
 | Code | [github.com/leduardoaraujo/NextAction](https://github.com/leduardoaraujo/NextAction) |
 
 ## Uses
 
-**Direct use.** Decide the next step of a conversational agent (ask, search, present options, confirm,
-execute, end the conversation), route uncertain decisions to human review, and log decisions with
-feedback to collect training data.
+**Direct use.** {direct_use}
 
-**Out of scope.** Executing irreversible actions (payments, bookings) from a prediction alone, domains
-far from the training data without re-evaluating, and any use as a source of facts: the model chooses
-an action, it does not generate or verify content.
+**Out of scope.** {out_of_scope}
 
 ## How to get started
 
