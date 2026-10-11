@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "opendecision"
+version = "0.2.0"
+description = "A small, auditable next-action model for AI agents, with English and Portuguese support."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Luiz Araujo" }]
+requires-python = ">=3.12"
+dependencies = [
+    "joblib>=1.4,<2",
+    "scikit-learn>=1.6,<2",
+]
+keywords = ["agents", "decision-making", "text-classification", "scikit-learn", "fastapi"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Natural Language :: English",
+    "Natural Language :: Portuguese (Brazilian)",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.optional-dependencies]
+api = ["fastapi>=0.120,<1", "uvicorn>=0.30,<1"]
+hf = ["skops>=0.11,<1", "huggingface_hub>=0.30,<2"]
+embeddings = ["sentence-transformers>=3,<6"]
+translate = ["transformers>=4.40,<6", "sentencepiece>=0.2,<1", "torch>=2.3"]
+dev = ["opendecision[api,hf]", "httpx>=0.27,<1"]
+
+[project.scripts]
+opendecision = "opendecision.cli:main"
+
+[project.urls]
+Repository = "https://github.com/leduardoaraujo/OpenDecision"
+
+[tool.setuptools.packages.find]
+include = ["opendecision*"]
