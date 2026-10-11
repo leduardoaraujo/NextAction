@@ -21,6 +21,7 @@ python demos/pacman/play.py                # watch the model play in the termina
 python demos/pacman/play.py --agent expert # or the expert, or random, raw, model-only
 python demos/pacman/play.py --gif demos/pacman/pacman.gif --pick-win
 python demos/pacman/benchmark.py --games 300
+python demos/pacman/analysis.py --games 300    # error analysis and charts
 ```
 
 | Script | What it does |
@@ -31,6 +32,7 @@ python demos/pacman/benchmark.py --games 300
 | [`generate_data.py`](generate_data.py) | records expert games as training and test CSVs (different seeds) |
 | [`play.py`](play.py) | runs one game with any agent, live in the terminal or recorded to a GIF |
 | [`benchmark.py`](benchmark.py) | plays hundreds of unseen games per agent and writes [RESULTS.md](RESULTS.md) |
+| [`analysis.py`](analysis.py) | logs every move, compares it with the expert's, and writes [ANALYSIS.md](ANALYSIS.md) with charts |
 
 ## State and policy
 
@@ -63,6 +65,17 @@ Playing 300 games that never appear in training or test data:
 - **The policy is a safety net here, not a crutch.** The model almost never picks a wall or a move next to a ghost on its own (0.003 corrections per game), so with or without the policy it wins the same share of games. The rules guarantee that it cannot, which matters more when a mistake is expensive.
 
 Full table: [RESULTS.md](RESULTS.md).
+
+## What goes wrong
+
+[ANALYSIS.md](ANALYSIS.md) logs all 36,746 moves of the benchmark games and compares each with what the expert would do. The main findings:
+
+- **The model disagrees with its teacher on 3.1% of moves**, and mostly when ghosts are far away (4.7%) or a power pill is active (5.1%), the moments where the choice is about which food to chase rather than survival. Near a ghost it disagrees on only 2.2%.
+- **Confidence is informative but not decisive.** Agreeing moves have a median confidence of 0.99 and disagreeing ones 0.69, yet the 0.6 threshold catches only a third of the disagreements.
+- **More review does not win more games.** Replaying with thresholds from 0.6 to 0.9 sends up to 15.9% of moves to the expert, and the win rate stays at 37–39%: the expert is no stronger than the model it taught. Review only pays off when the reviewer is better than the model.
+- **Every loss ends in a trap.** In all lost games, Pac-Man's last position had every open move next to a ghost, so the fatal mistake happened earlier, by walking into a dead end, which per-move features cannot see.
+
+![Confidence of agreeing and disagreeing moves](analysis/confidence_agree_vs_disagree.png)
 
 ## Limits
 

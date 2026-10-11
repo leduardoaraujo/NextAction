@@ -16,6 +16,7 @@ moves next to a ghost), the threshold, and who made the decision.
 """
 
 import argparse
+import dataclasses
 import random
 import sys
 import time
@@ -37,13 +38,15 @@ AGENTS = ("model", "model-only", "raw", "expert", "random")
 
 
 class Agent:
-    def __init__(self, kind: str, seed: int = 0):
+    def __init__(self, kind: str, seed: int = 0, threshold: float | None = None):
         self.kind = kind
         self.rng = random.Random(seed)
         if kind in ("model", "model-only", "raw"):
             scenario = get_scenario("pacman")
             self.model = joblib.load(scenario.model)
             self.policy = scenario.policy
+            if threshold is not None:
+                self.policy = dataclasses.replace(self.policy, default_threshold=threshold)
 
     def decide(self, game: Game) -> tuple[str, dict]:
         """Return the move and what the panel shows about the decision."""
@@ -68,8 +71,8 @@ class Agent:
         return decision["action"], info
 
 
-def run_game(kind: str, seed: int, on_step=None) -> dict:
-    game, agent = Game(seed=seed), Agent(kind, seed)
+def run_game(kind: str, seed: int, on_step=None, threshold: float | None = None) -> dict:
+    game, agent = Game(seed=seed), Agent(kind, seed, threshold)
     reviews = corrections = 0
     while game.status == "playing":
         action, info = agent.decide(game)
