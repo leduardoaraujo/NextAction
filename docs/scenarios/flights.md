@@ -22,9 +22,9 @@ The program only **suggests** an action. Even when the model suggests `search`, 
 ## Try it
 
 ```bash
-opendecision train flights
-opendecision decide flights "Tenho origem GRU destino REC ida 12/11 volta 19/11 e um adulto mas ainda não consultei voos"
-opendecision evaluate flights
+nextaction train flights
+nextaction decide flights "Tenho origem GRU destino REC ida 12/11 volta 19/11 e um adulto mas ainda não consultei voos"
+nextaction evaluate flights
 ```
 
 The examples are synthetic and few. Cross-validation gives 0.50 accuracy, and the model never reaches 0.5 confidence, so with the default threshold every decision goes to review. To improve it, replace the examples with reviewed conversation states, keep the most recent real cases for evaluation, and only then choose a review threshold.
@@ -34,7 +34,7 @@ The examples are synthetic and few. Cross-validation gives 0.50 accuracy, and th
 `rank-flights` takes a **structured** state and makes a more detailed decision. The example file is fictional and contains no real prices or availability.
 
 ```bash
-opendecision rank-flights data/trip_example.json
+nextaction rank-flights data/trip_example.json
 ```
 
 The flow:

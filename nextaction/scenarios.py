@@ -16,7 +16,7 @@ CALIBRATIONS = ("none", "sigmoid", "isotonic")
 
 
 def configs_dir() -> Path:
-    return Path(os.environ.get("OPENDECISION_CONFIGS_DIR", ROOT / "configs"))
+    return Path(os.environ.get("NEXTACTION_CONFIGS_DIR", ROOT / "configs"))
 
 
 @dataclass(frozen=True)

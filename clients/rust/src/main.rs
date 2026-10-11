@@ -140,13 +140,13 @@ fn post<Request: Serialize, Response: DeserializeOwned>(
     body: &Request,
 ) -> Result<Response, Box<dyn Error>> {
     let url = format!("{}{path}", base_url.trim_end_matches('/'));
-    let language = env::var("OPENDECISION_LANG").unwrap_or_else(|_| "en".to_string());
+    let language = env::var("NEXTACTION_LANG").unwrap_or_else(|_| "en".to_string());
     let response = match client.post(url).header("Accept-Language", language).json(body).send() {
         Ok(response) => response,
         Err(error) if error.is_connect() || error.is_timeout() => {
             return Err(format!(
                 "Could not connect to the API at {base_url}. Start the server in another terminal with \
-                 'uvicorn opendecision.api:app --host 127.0.0.1 --port 8000' or set OPENDECISION_API_URL. \
+                 'uvicorn nextaction.api:app --host 127.0.0.1 --port 8000' or set NEXTACTION_API_URL. \
                  Details: {error}"
             )
             .into());
@@ -163,7 +163,7 @@ fn post<Request: Serialize, Response: DeserializeOwned>(
 fn run() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();
     let base_url =
-        env::var("OPENDECISION_API_URL").unwrap_or_else(|_| "http://127.0.0.1:8000".to_string());
+        env::var("NEXTACTION_API_URL").unwrap_or_else(|_| "http://127.0.0.1:8000".to_string());
     let client = Client::builder().timeout(Duration::from_secs(10)).build()?;
 
     match args.get(1).map(String::as_str) {
@@ -185,7 +185,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         }
         _ => {
             return Err(
-                "Usage: opendecision-client action <agent|flights|research> <state> [threshold] | flights <trip.json>"
+                "Usage: nextaction-client action <agent|flights|research> <state> [threshold] | flights <trip.json>"
                     .into(),
             );
         }

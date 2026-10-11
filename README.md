@@ -1,8 +1,8 @@
-# OpenDecision
+# NextAction
 
-**A small, auditable next-action model for AI agents.** Given the current state of a conversation, OpenDecision predicts what the agent should do next (ask, search, present options, confirm, execute, end the conversation) with a probability for every action and a threshold that sends uncertain cases to a human. It speaks **English and Portuguese**.
+**A small, auditable next-action model for AI agents.** Given the current state of a conversation, NextAction predicts what the agent should do next (ask, search, present options, confirm, execute, end the conversation) with a probability for every action and a threshold that sends uncertain cases to a human. It speaks **English and Portuguese**.
 
-[![CI](https://img.shields.io/github/actions/workflow/status/leduardoaraujo/OpenDecision/ci.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/leduardoaraujo/OpenDecision/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/leduardoaraujo/NextAction/ci.yml?branch=main&label=CI&logo=githubactions&logoColor=white)](https://github.com/leduardoaraujo/NextAction/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.12%2B-3776AB?logo=python&logoColor=white)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?logo=scikitlearn&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
@@ -10,7 +10,9 @@
 ![Languages](https://img.shields.io/badge/languages-EN%20%7C%20PT-6f42c1)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-*Leia em português: [README.pt-BR.md](README.pt-BR.md)* · Models on the Hub: [opendecision-agent](https://huggingface.co/ludolua/opendecision-agent), [opendecision-flights](https://huggingface.co/ludolua/opendecision-flights)
+> Formerly named OpenDecision. Renamed to NextAction to avoid confusion with an unrelated project of the same name.
+
+*Leia em português: [README.pt-BR.md](README.pt-BR.md)* · Models on the Hub: [nextaction-agent](https://huggingface.co/ludolua/nextaction-agent), [nextaction-flights](https://huggingface.co/ludolua/nextaction-flights)
 
 ```text
 state  →  [intent SearchOnewayFlight] [filled origin_airport] [missing destination_airport departure_date]
@@ -20,7 +22,7 @@ action →  ask (0.99)   ✓ automatic, above the 0.9 review threshold
 
 ## Why
 
-LLM agents rarely fail at writing sentences; they fail at **control flow**: searching before they know the destination, booking without confirmation, answering when they should ask. OpenDecision isolates that decision into a model that is:
+LLM agents rarely fail at writing sentences; they fail at **control flow**: searching before they know the destination, booking without confirmation, answering when they should ask. NextAction isolates that decision into a model that is:
 
 - **Explicit**: one fixed action vocabulary, so every choice can be logged, counted and tested.
 - **Policy-driven**: per-action thresholds, risk levels, error costs and state rules decide what is automated, what is blocked and what goes to review, all set in one TOML file per scenario.
@@ -72,8 +74,8 @@ python -m venv .venv
 source .venv/bin/activate            # Windows: .venv\Scripts\activate
 pip install -e ".[api]"
 
-opendecision train flights
-opendecision decide flights "Tenho origem GRU destino REC ida 12/11 e ainda não consultei voos"
+nextaction train flights
+nextaction decide flights "Tenho origem GRU destino REC ida 12/11 e ainda não consultei voos"
 ```
 
 ```json
@@ -93,7 +95,7 @@ opendecision decide flights "Tenho origem GRU destino REC ida 12/11 e ainda não
 The bundled scenarios are tiny and synthetic, so the model is unsure and asks for review. To train the generic model on real dialogues, follow [docs/sgd-model.md](docs/sgd-model.md). To serve it over HTTP:
 
 ```bash
-uvicorn opendecision.api:app --reload    # then open http://127.0.0.1:8000/docs
+uvicorn nextaction.api:app --reload    # then open http://127.0.0.1:8000/docs
 ```
 
 ## English and Portuguese
@@ -110,7 +112,7 @@ English is the canonical language of the code and the contracts; Portuguese is a
 | CSV columns | `state,action` | `estado,acao` |
 | State tags | `[intent] [filled] [missing] [requested]`, `user:` | `[intencao] [preenchidos] [faltando] [pedidos]`, `usuario:` |
 
-Responses always use the English names. Human-readable messages (errors, warnings, help) follow `--lang pt`, `OPENDECISION_LANG=pt` or the `Accept-Language: pt-BR` header. Details are in [docs/api.md](docs/api.md#languages).
+Responses always use the English names. Human-readable messages (errors, warnings, help) follow `--lang pt`, `NEXTACTION_LANG=pt` or the `Accept-Language: pt-BR` header. Details are in [docs/api.md](docs/api.md#languages).
 
 ## Features
 
@@ -119,13 +121,13 @@ Responses always use the English names. Human-readable messages (errors, warning
 | **Scenarios** | `agent` (generic, real dialogues), `flights` (flight booking), `research` (research agent) |
 | **CLI** | `train`, `decide`, `evaluate`, `tune`, `calibrate-policy`, `import-sgd`, `export-labels`, `export-hf`, `rank-flights`, `jobs` |
 | **REST API** | decide, feedback, flight-offer ranking, model status, jobs; OpenAPI docs at `/docs` |
-| **Progress tracking** | progress bars in the terminal, `opendecision jobs --watch` and a live web dashboard at `/dashboard` |
+| **Progress tracking** | progress bars in the terminal, `nextaction jobs --watch` and a live web dashboard at `/dashboard` |
 | **Decision policy** | per-action thresholds calibrated from error costs, risk levels, confirmation for irreversible actions, rules that block impossible actions ([docs/policy.md](docs/policy.md)) |
-| **Tuning** | `opendecision tune` searches the hyperparameter grid in the scenario config |
+| **Tuning** | `nextaction tune` searches the hyperparameter grid in the scenario config |
 | **Evaluation** | cross-validation, separate test set or most-recent slice; per-action F1, confusion matrix, ECE, threshold table |
 | **Rule-based ranker** | filters and ranks flight offers by budget, baggage, stops, price and duration, with explanations |
 | **Clients** | typed Rust CLI (`clients/rust`) |
-| **Distribution** | skops export with a generated model card and the decision policy, published on the [Hugging Face Hub](https://huggingface.co/ludolua/opendecision-agent) |
+| **Distribution** | skops export with a generated model card and the decision policy, published on the [Hugging Face Hub](https://huggingface.co/ludolua/nextaction-agent) |
 
 ## Testing
 
@@ -133,7 +135,7 @@ Two kinds of evidence back this project: **software tests** that check every con
 
 ### Software tests
 
-**61 tests, all passing, 87% coverage** (lines and branches). CI runs them on Python 3.12 and 3.13 for every push and pull request, builds the Rust client, and publishes the full report in each run's summary on the [Actions tab](https://github.com/leduardoaraujo/OpenDecision/actions/workflows/ci.yml).
+**61 tests, all passing, 87% coverage** (lines and branches). CI runs them on Python 3.12 and 3.13 for every push and pull request, builds the Rust client, and publishes the full report in each run's summary on the [Actions tab](https://github.com/leduardoaraujo/NextAction/actions/workflows/ci.yml).
 
 | Suite | Tests | What it verifies |
 | --- | --- | --- |
@@ -141,7 +143,7 @@ Two kinds of evidence back this project: **software tests** that check every con
 | [`test_policy`](tests/test_policy.py) | 10 | rule masking, per-action thresholds, irreversible actions, cost-based calibration, tuning written back to TOML |
 | [`test_flights`](tests/test_flights.py) | 7 | rule-based offer filtering and ranking, validation errors in both languages |
 | [`test_progress`](tests/test_progress.py) | 7 | job files, stale jobs, `jobs` command, `/v1/jobs` and the dashboard |
-| [`test_cli`](tests/test_cli.py) | 6 | English commands, Portuguese aliases, `--lang` and `OPENDECISION_LANG` |
+| [`test_cli`](tests/test_cli.py) | 6 | English commands, Portuguese aliases, `--lang` and `NEXTACTION_LANG` |
 | [`test_vocabulary`](tests/test_vocabulary.py) | 6 | action and state normalization, Portuguese CSVs, models trained with Portuguese labels |
 | [`test_evaluation`](tests/test_evaluation.py) | 5 | cross-validation, recent-slice testing, threshold table, localized report |
 | [`test_sgd`](tests/test_sgd.py) | 4 | SGD act mapping, missing-slot state, flights schema |
@@ -162,15 +164,15 @@ Model claims in this README are measured, not estimated. Each number comes from 
 
 | Claim | Evidence | Reproduce |
 | --- | --- | --- |
-| 0.90 accuracy on services never seen in training | official SGD test split, 42,297 turns | `opendecision evaluate agent` |
+| 0.90 accuracy on services never seen in training | official SGD test split, 42,297 turns | `nextaction evaluate agent` |
 | Dialogue state lifts accuracy from 0.77 to 0.90 | ablation with and without state tags | [docs/sgd-model.md](docs/sgd-model.md#ablation-does-the-dialogue-state-matter) |
-| Calibrated policy lowers expected cost by 12% | thresholds fitted on the dev split, scored on test | `opendecision calibrate-policy agent`, then `evaluate agent` ([docs/policy.md](docs/policy.md#results-on-the-sgd-test-split)) |
-| The small bundled scenarios are not reliable | cross-validation gives 0.50 on 48 examples | `opendecision evaluate flights` |
+| Calibrated policy lowers expected cost by 12% | thresholds fitted on the dev split, scored on test | `nextaction calibrate-policy agent`, then `evaluate agent` ([docs/policy.md](docs/policy.md#results-on-the-sgd-test-split)) |
+| The small bundled scenarios are not reliable | cross-validation gives 0.50 on 48 examples | `nextaction evaluate flights` |
 
 ## Repository layout
 
 ```text
-opendecision/
+nextaction/
   vocabulary.py    canonical actions and state format, with Portuguese aliases
   scenarios.py     loads configs/<scenario>.toml: data, model parameters, tuning grid, policy
   policy.py        decision policy: rules, per-action thresholds, risk, cost-based calibration

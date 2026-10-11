@@ -7,7 +7,7 @@ Library code reports through the current job without receiving it as an argument
             fit.update(250)
 
 Outside a job, ``stage`` is a no-op, so instrumented functions work unchanged in tests and
-when imported as a library. ``opendecision jobs`` and ``GET /v1/jobs`` read the JSON files.
+when imported as a library. ``nextaction jobs`` and ``GET /v1/jobs`` read the JSON files.
 """
 
 import contextvars
@@ -24,12 +24,12 @@ from .scenarios import ROOT
 
 STALE_AFTER_S = 300
 WRITE_INTERVAL_S = 0.5
-_current: contextvars.ContextVar["Job | None"] = contextvars.ContextVar("opendecision_job", default=None)
+_current: contextvars.ContextVar["Job | None"] = contextvars.ContextVar("nextaction_job", default=None)
 _terminal = {"enabled": True}
 
 
 def jobs_dir() -> Path:
-    return Path(os.environ.get("OPENDECISION_JOBS_DIR", ROOT / "jobs"))
+    return Path(os.environ.get("NEXTACTION_JOBS_DIR", ROOT / "jobs"))
 
 
 def set_terminal(enabled: bool) -> None:

@@ -24,7 +24,7 @@ citation = """@inproceedings{rastogi2020schema,
 }"""
 decision = "what an assistant should do next in a task-oriented conversation"
 example = "[intent SearchOnewayFlight] [filled destination_airport origin_airport] [missing departure_date] [requested none] || user: I need a one way flight from New York to Seattle."
-data_source = "assistant turns from the [Schema-Guided Dialogue](https://github.com/google-research-datasets/dstc8-schema-guided-dialogue) (Rastogi et al., 2020, CC BY-SA 4.0): conversations between people and a virtual assistant across 20 domains, written by crowd workers from simulated outlines. Build the CSV with `opendecision import-sgd`"
+data_source = "assistant turns from the [Schema-Guided Dialogue](https://github.com/google-research-datasets/dstc8-schema-guided-dialogue) (Rastogi et al., 2020, CC BY-SA 4.0): conversations between people and a virtual assistant across 20 domains, written by crowd workers from simulated outlines. Build the CSV with `nextaction import-sgd`"
 
 [model]
 ngram_range = [1, 2]
@@ -43,7 +43,7 @@ min_df = [2, 5]
 ngram_range = [[1, 1], [1, 2]]
 class_weight = ["none", "balanced"]
 
-# The min_confidence values below were chosen by `opendecision calibrate-policy agent --write`
+# The min_confidence values below were chosen by `nextaction calibrate-policy agent --write`
 # on the SGD dev split, from the error costs set here. Edit the costs and re-run to change them.
 [policy]
 default_threshold = 0.7

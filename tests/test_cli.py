@@ -9,8 +9,8 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from opendecision.cli import main
-from opendecision.i18n import MESSAGES, resolve_language
+from nextaction.cli import main
+from nextaction.i18n import MESSAGES, resolve_language
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -33,7 +33,7 @@ class CliTest(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.model = str(Path(self.temp.name) / "flights.joblib")
-        self.jobs = patch.dict(os.environ, {"OPENDECISION_JOBS_DIR": self.temp.name})
+        self.jobs = patch.dict(os.environ, {"NEXTACTION_JOBS_DIR": self.temp.name})
         self.jobs.start()
 
     def tearDown(self):
@@ -64,7 +64,7 @@ class CliTest(unittest.TestCase):
         self.assertIn("Treine o cenário antes", run_error("--lang", "pt", "decide", "flights", "x", "--model", missing))
 
     def test_language_falls_back_to_environment(self):
-        with patch.dict(os.environ, {"OPENDECISION_LANG": "pt-BR"}):
+        with patch.dict(os.environ, {"NEXTACTION_LANG": "pt-BR"}):
             self.assertEqual(resolve_language(None), "pt")
         self.assertEqual(resolve_language("en-US"), "en")
 

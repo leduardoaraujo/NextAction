@@ -12,16 +12,16 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
-from opendecision.api import app
-from opendecision.cli import main
-from opendecision.progress import Job, describe, list_jobs, stage
+from nextaction.api import app
+from nextaction.cli import main
+from nextaction.progress import Job, describe, list_jobs, stage
 
 
 class ProgressTest(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.folder = Path(self.temp.name)
-        self.env = patch.dict(os.environ, {"OPENDECISION_JOBS_DIR": self.temp.name})
+        self.env = patch.dict(os.environ, {"NEXTACTION_JOBS_DIR": self.temp.name})
         self.env.start()
 
     def tearDown(self):

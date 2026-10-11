@@ -1,6 +1,6 @@
 # Scenario configs and the decision policy
 
-A classifier only says how likely each action is. A real decision system also needs to know **which actions are allowed right now, how sure it must be before acting alone, and how bad each kind of mistake is**. In OpenDecision those answers live next to the model parameters, in one TOML file per scenario: `configs/<scenario>.toml`. Adding a scenario means adding a file.
+A classifier only says how likely each action is. A real decision system also needs to know **which actions are allowed right now, how sure it must be before acting alone, and how bad each kind of mistake is**. In NextAction those answers live next to the model parameters, in one TOML file per scenario: `configs/<scenario>.toml`. Adding a scenario means adding a file.
 
 ## Anatomy of a config
 
@@ -22,7 +22,7 @@ class_weight = "none"    # or "balanced"
 max_iter = 1000
 calibration = "none"     # "sigmoid" or "isotonic" (CalibratedClassifierCV)
 
-[tuning]                 # grid searched by `opendecision tune`
+[tuning]                 # grid searched by `nextaction tune`
 sample = 40000
 folds = 3
 metric = "f1_macro"      # or "accuracy"
@@ -79,8 +79,8 @@ deny = ["search", "execute"]
 ## Tuning the model
 
 ```bash
-opendecision tune flights            # search the [tuning] grid with cross-validation
-opendecision tune flights --write    # store the best values in [model]
+nextaction tune flights            # search the [tuning] grid with cross-validation
+nextaction tune flights --write    # store the best values in [model]
 ```
 
 The search reports progress per candidate and fold, and prints the top five combinations with their mean score and standard deviation. On large datasets, `sample` limits the search to a stratified subsample.
@@ -88,8 +88,8 @@ The search reports progress per candidate and fold, and prints the top five comb
 ## Calibrating the policy from error costs
 
 ```bash
-opendecision calibrate-policy agent            # show the thresholds and their effect
-opendecision calibrate-policy agent --write    # store them as min_confidence
+nextaction calibrate-policy agent            # show the thresholds and their effect
+nextaction calibrate-policy agent --write    # store them as min_confidence
 ```
 
 For every action, the command tries thresholds from 0.30 to 0.99. For each one it adds the cost of the wrong decisions that would pass unreviewed (`unreviewed_error_cost`) and the cost of the ones sent to review (`review_cost`), and keeps the cheapest threshold. It uses the scenario's `validation` file when there is one, cross-validation on small datasets, and an 80/20 split otherwise.
@@ -98,7 +98,7 @@ Calibrate on data that looks like production. Calibrating the `agent` scenario o
 
 ## Results on the SGD test split
 
-`opendecision evaluate agent` adds a `policy` section that simulates the configured policy on held-out predictions:
+`nextaction evaluate agent` adds a `policy` section that simulates the configured policy on held-out predictions:
 
 | Policy | Accuracy | Automated | Accuracy when automated | Unreviewed errors | Expected cost per decision |
 | --- | --- | --- | --- | --- | --- |

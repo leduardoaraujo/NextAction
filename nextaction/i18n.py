@@ -23,8 +23,8 @@ MESSAGES = {
         "pt": "Use pelo menos duas ações e quatro exemplos por ação.",
     },
     "train_note": {
-        "en": "Run `opendecision evaluate` to measure performance before relying on this model.",
-        "pt": "Rode `opendecision evaluate` para medir o desempenho antes de confiar neste modelo.",
+        "en": "Run `nextaction evaluate` to measure performance before relying on this model.",
+        "pt": "Rode `nextaction evaluate` para medir o desempenho antes de confiar neste modelo.",
     },
     "threshold_range": {
         "en": "The threshold must be between 0 and 1.",
@@ -185,12 +185,12 @@ MESSAGES = {
     "no_jobs": {"en": "No jobs yet.", "pt": "Nenhum job ainda."},
     # CLI help
     "cli_description": {
-        "en": "OpenDecision: predict an agent's next action and know when to ask a human.",
-        "pt": "OpenDecision: prevê a próxima ação de um agente e sabe quando pedir revisão humana.",
+        "en": "NextAction: predict an agent's next action and know when to ask a human.",
+        "pt": "NextAction: prevê a próxima ação de um agente e sabe quando pedir revisão humana.",
     },
     "cli_lang": {
-        "en": "language for messages: en or pt (default: $OPENDECISION_LANG or en)",
-        "pt": "idioma das mensagens: en ou pt (padrão: $OPENDECISION_LANG ou en)",
+        "en": "language for messages: en or pt (default: $NEXTACTION_LANG or en)",
+        "pt": "idioma das mensagens: en ou pt (padrão: $NEXTACTION_LANG ou en)",
     },
     "cli_scenario": {"en": "scenario: {options}", "pt": "cenário: {options}"},
     "cli_train": {"en": "train a scenario from a labeled CSV", "pt": "treina um cenário a partir de um CSV rotulado"},
@@ -241,8 +241,8 @@ MESSAGES = {
     "cli_no_state": {"en": "use only the conversation text", "pt": "usa só o texto da conversa"},
     "cli_log": {"en": "decision log (JSONL)", "pt": "registro de decisões (JSONL)"},
     "cli_repo": {
-        "en": "Hub repository, e.g. user/opendecision-agent",
-        "pt": "repositório no Hub, por exemplo usuario/opendecision-agent",
+        "en": "Hub repository, e.g. user/nextaction-agent",
+        "pt": "repositório no Hub, por exemplo usuario/nextaction-agent",
     },
     "cli_license": {"en": "Hub license id, e.g. mit", "pt": "identificador de licença do Hub, por exemplo mit"},
     "cli_jobs": {"en": "show training and import jobs with their progress", "pt": "mostra os jobs de treino e importação com o progresso"},
@@ -266,7 +266,7 @@ MESSAGES = {
 
 def resolve_language(value: str | None = None) -> str:
     """Map 'pt', 'pt-BR', 'pt_BR', 'en-US'... to a supported language, falling back to the env var."""
-    for candidate in (value, os.environ.get("OPENDECISION_LANG"), "en"):
+    for candidate in (value, os.environ.get("NEXTACTION_LANG"), "en"):
         if candidate:
             code = candidate.strip().lower().replace("_", "-").split("-")[0]
             if code in LANGUAGES:

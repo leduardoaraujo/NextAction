@@ -23,7 +23,7 @@ from .sgd import SCHEMA_ALIASES, SCHEMAS, convert
 
 
 def build_parser(lang: str) -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="opendecision", description=t("cli_description", lang))
+    parser = argparse.ArgumentParser(prog="nextaction", description=t("cli_description", lang))
     parser.add_argument("--lang", "--idioma", help=t("cli_lang", lang))
     parser.add_argument("--no-progress", "--sem-progresso", action="store_true", help=t("cli_no_progress", lang))
     commands = parser.add_subparsers(dest="command", required=True)

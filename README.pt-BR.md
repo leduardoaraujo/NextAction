@@ -1,8 +1,10 @@
-# OpenDecision
+# NextAction
 
-*Read in English: [README.md](README.md)* · Modelos no Hugging Face: [opendecision-agent](https://huggingface.co/ludolua/opendecision-agent), [opendecision-flights](https://huggingface.co/ludolua/opendecision-flights)
+> Antes se chamava OpenDecision. Mudou para NextAction para não ser confundido com outro projeto de mesmo nome.
 
-**Um modelo pequeno e auditável que decide a próxima ação de agentes de IA.** A partir do estado atual de uma conversa, o OpenDecision prevê o que o agente deve fazer em seguida (perguntar, buscar, apresentar opções, confirmar, executar, encerrar). Cada previsão vem com a probabilidade de cada ação e um limiar que manda os casos incertos para revisão humana. Funciona em **inglês e português**.
+*Read in English: [README.md](README.md)* · Modelos no Hugging Face: [nextaction-agent](https://huggingface.co/ludolua/nextaction-agent), [nextaction-flights](https://huggingface.co/ludolua/nextaction-flights)
+
+**Um modelo pequeno e auditável que decide a próxima ação de agentes de IA.** A partir do estado atual de uma conversa, o NextAction prevê o que o agente deve fazer em seguida (perguntar, buscar, apresentar opções, confirmar, executar, encerrar). Cada previsão vem com a probabilidade de cada ação e um limiar que manda os casos incertos para revisão humana. Funciona em **inglês e português**.
 
 ```text
 estado →  [intencao SearchOnewayFlight] [preenchidos origin_airport] [faltando destination_airport departure_date]
@@ -12,7 +14,7 @@ ação   →  ask (perguntar)   ✓ automática, acima do limiar de revisão
 
 ## Por quê
 
-Agentes com LLM raramente erram ao escrever frases. Eles erram no **controle de fluxo**: buscam antes de saber o destino, reservam sem confirmação, respondem quando deveriam perguntar. O OpenDecision isola essa decisão num modelo que é:
+Agentes com LLM raramente erram ao escrever frases. Eles erram no **controle de fluxo**: buscam antes de saber o destino, reservam sem confirmação, respondem quando deveriam perguntar. O NextAction isola essa decisão num modelo que é:
 
 - **explícito**, com um vocabulário fixo de ações que pode ser registrado, contado e testado;
 - **feito para passar a vez**, porque cada previsão tem probabilidades e um limiar define o que é automático e o que vai para revisão;
@@ -38,11 +40,11 @@ python -m venv .venv
 source .venv/bin/activate            # Windows: .venv\Scripts\activate
 pip install -e ".[api]"
 
-opendecision treinar passagens
-opendecision --lang pt decidir passagens "Tenho origem GRU destino REC ida 12/11 e ainda não consultei voos"
+nextaction treinar passagens
+nextaction --lang pt decidir passagens "Tenho origem GRU destino REC ida 12/11 e ainda não consultei voos"
 ```
 
-Os comandos, as opções, os campos da API, os nomes das ações, as colunas do CSV e as tags de estado aceitam os nomes em português como sinônimos permanentes. As respostas usam sempre os nomes em inglês. As mensagens para pessoas (erros, avisos e ajuda) saem em português com `--lang pt`, `OPENDECISION_LANG=pt` ou o header `Accept-Language: pt-BR`.
+Os comandos, as opções, os campos da API, os nomes das ações, as colunas do CSV e as tags de estado aceitam os nomes em português como sinônimos permanentes. As respostas usam sempre os nomes em inglês. As mensagens para pessoas (erros, avisos e ajuda) saem em português com `--lang pt`, `NEXTACTION_LANG=pt` ou o header `Accept-Language: pt-BR`.
 
 | | Inglês | Português |
 | --- | --- | --- |
@@ -55,7 +57,7 @@ Os comandos, as opções, os campos da API, os nomes das ações, as colunas do 
 
 São **61 testes automatizados, todos passando, com 87% de cobertura**. O CI roda a suíte no Python 3.12 e 3.13 a cada push e pull request e publica o relatório completo no resumo da execução. A lista de cada teste com resultado, tempo e cobertura por módulo está em [docs/testing.md](docs/testing.md).
 
-Os números do modelo também são medidos, não estimados: cada resultado vem de um conjunto de teste separado e pode ser reproduzido com `opendecision evaluate agent`.
+Os números do modelo também são medidos, não estimados: cada resultado vem de um conjunto de teste separado e pode ser reproduzido com `nextaction evaluate agent`.
 
 ```bash
 pip install -e ".[dev]"

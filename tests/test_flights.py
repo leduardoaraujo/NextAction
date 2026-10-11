@@ -5,8 +5,8 @@ import unittest
 from copy import deepcopy
 from pathlib import Path
 
-from opendecision.flights import rank_flights
-from opendecision.i18n import LocalizedError
+from nextaction.flights import rank_flights
+from nextaction.i18n import LocalizedError
 
 EXAMPLE = Path(__file__).resolve().parents[1] / "data" / "trip_example.json"
 
