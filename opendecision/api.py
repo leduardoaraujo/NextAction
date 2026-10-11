@@ -60,7 +60,7 @@ def decide_action(request: ActionRequest, lang: Language) -> dict:
     if not path.is_file():
         raise HTTPException(status_code=503, detail=t("model_unavailable", lang, scenario=request.scenario))
     try:
-        decision = decide(path, request.state, request.threshold)
+        decision = decide(path, request.state, request.threshold, SCENARIOS[request.scenario].policy)
     except LocalizedError as error:
         raise HTTPException(status_code=422, detail=error.message(lang)) from error
     if DECISION_LOG is not None:

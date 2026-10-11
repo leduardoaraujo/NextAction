@@ -44,9 +44,9 @@ def export(name: str, destination: Path, repo: str | None = None, license_id: st
 
 
 def train_and_evaluate(scenario: Scenario):
-    model, states, actions = fit(scenario.data, scenario.min_df)
+    model, states, actions = fit(scenario.data, scenario.params)
     if scenario.test is None:
-        report = evaluate(scenario.data, min_df=scenario.min_df, lang="en")
+        report = evaluate(scenario.data, params=scenario.params, lang="en")
         return model, {**report, "train_examples": len(states)}
     # With a separate test set, the published model is the evaluated model itself.
     test_x, test_y = load_examples(scenario.test)
@@ -113,8 +113,9 @@ compatible with the training one to avoid version warnings.
 
 ## Architecture
 
-scikit-learn pipeline: `TfidfVectorizer(ngram_range=(1, 2), strip_accents="unicode", min_df={scenario.min_df})` followed by
-`LogisticRegression(max_iter=1000)`. Training, evaluation and API code: [OpenDecision](https://github.com/leduardoaraujo/OpenDecision).
+scikit-learn pipeline: `TfidfVectorizer(ngram_range={scenario.params.ngram_range}, strip_accents="unicode", min_df={scenario.params.min_df})` followed by
+`LogisticRegression(C={scenario.params.C}, class_weight={scenario.params.class_weight!r}, max_iter={scenario.params.max_iter})`
+(calibration: {scenario.params.calibration}). Training, evaluation and API code: [OpenDecision](https://github.com/leduardoaraujo/OpenDecision).
 
 ## Training data
 

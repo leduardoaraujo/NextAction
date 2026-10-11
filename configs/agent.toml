@@ -1,0 +1,89 @@
+# Generic next-action model for task-oriented assistants, trained on Schema-Guided Dialogue.
+
+[scenario]
+name = "agent"
+alias = "agente"
+languages = ["en"]
+data = "data/external/sgd_generic_train.csv"
+test = "data/external/sgd_generic_test.csv"
+validation = "data/external/sgd_generic_dev.csv"   # used by calibrate-policy
+model = "models/agent.joblib"
+license = "cc-by-sa-4.0"
+ship_data = false
+decision = "what an assistant should do next in a task-oriented conversation"
+example = "[intent SearchOnewayFlight] [filled destination_airport origin_airport] [missing departure_date] [requested none] || user: I need a one way flight from New York to Seattle."
+data_source = "assistant turns from the [Schema-Guided Dialogue](https://github.com/google-research-datasets/dstc8-schema-guided-dialogue) (Rastogi et al., 2020, CC BY-SA 4.0): conversations between people and a virtual assistant across 20 domains, written by crowd workers from simulated outlines. Build the CSV with `opendecision import-sgd`"
+
+[model]
+ngram_range = [1, 2]
+min_df = 5            # drop terms seen in fewer than 5 turns: 178k -> 54k terms, same accuracy
+C = 1.0               # inverse regularization strength
+class_weight = "none" # or "balanced" to up-weight rare actions
+max_iter = 1000
+calibration = "none"  # "sigmoid" or "isotonic" wraps the model in CalibratedClassifierCV
+
+[tuning]
+sample = 40000        # stratified subsample used for the grid search on this large dataset
+folds = 3
+metric = "f1_macro"
+C = [0.3, 1.0, 3.0]
+min_df = [2, 5]
+ngram_range = [[1, 1], [1, 2]]
+class_weight = ["none", "balanced"]
+
+# The min_confidence values below were chosen by `opendecision calibrate-policy agent --write`
+# on the SGD dev split, from the error costs set here. Edit the costs and re-run to change them.
+[policy]
+default_threshold = 0.7
+review_cost = 1.0     # cost of sending one decision to a person, the unit for the costs below
+
+[policy.actions.ask]
+risk = "low"
+unreviewed_error_cost = 2
+min_confidence = 0.33
+
+[policy.actions.answer]
+risk = "low"
+unreviewed_error_cost = 2
+min_confidence = 0.3
+
+[policy.actions.search]
+risk = "low"
+unreviewed_error_cost = 3
+min_confidence = 0.64
+
+[policy.actions.present_options]
+risk = "low"
+unreviewed_error_cost = 3
+min_confidence = 0.48
+
+[policy.actions.suggest_next_step]
+risk = "low"
+unreviewed_error_cost = 3
+min_confidence = 0.42
+
+[policy.actions.offer_more_help]
+risk = "low"
+unreviewed_error_cost = 2
+min_confidence = 0.31
+
+[policy.actions.end_conversation]
+risk = "medium"
+min_confidence = 0.54
+unreviewed_error_cost = 8
+
+[policy.actions.confirm]
+risk = "medium"
+min_confidence = 0.71
+unreviewed_error_cost = 10
+
+[policy.actions.execute]
+risk = "irreversible"           # bookings, payments, transfers
+min_confidence = 0.86
+unreviewed_error_cost = 50
+requires_confirmation = true    # always confirm with the user, even when confident
+
+[[policy.rules]]
+id = "no_search_or_execute_with_missing_fields"
+when_missing_any = true
+deny = ["search", "execute"]

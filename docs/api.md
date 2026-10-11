@@ -43,7 +43,7 @@ curl -s http://127.0.0.1:8000/v1/actions/decide -H "Content-Type: application/js
 }
 ```
 
-`needs_review` is true when the top probability is below `threshold`. A missing model returns `503`; invalid input returns `422`.
+`threshold` is optional: without it, the scenario's per-action thresholds apply. The response also carries `requires_confirmation`, `risk`, the `threshold` used, `reasons` and `blocked_actions` from the decision policy ([policy.md](policy.md)). A missing model returns `503`; invalid input returns `422`.
 
 ## Feedback loop
 

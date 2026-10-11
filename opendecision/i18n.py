@@ -42,6 +42,22 @@ MESSAGES = {
         "en": "Model file {path} not found. Train the scenario first.",
         "pt": "Arquivo de modelo {path} não encontrado. Treine o cenário antes.",
     },
+    "config_missing_field": {
+        "en": "{path} is missing the required field '{field}'.",
+        "pt": "{path} não tem o campo obrigatório '{field}'.",
+    },
+    "config_invalid_value": {
+        "en": "Invalid value '{value}' for {field}. Use one of: {options}.",
+        "pt": "Valor inválido '{value}' para {field}. Use um destes: {options}.",
+    },
+    "policy_invalid_risk": {
+        "en": "Invalid risk '{risk}' for action '{action}'. Use one of: {options}.",
+        "pt": "Risco inválido '{risk}' para a ação '{action}'. Use um destes: {options}.",
+    },
+    "tuning_empty_grid": {
+        "en": "The [tuning] section has no parameter lists to search.",
+        "pt": "A seção [tuning] não tem listas de parâmetros para testar.",
+    },
     # Evaluation
     "test_modes_exclusive": {
         "en": "Use either --test or --recent-fraction, not both.",
@@ -159,6 +175,8 @@ MESSAGES = {
     "stage_predict": {"en": "Predicting", "pt": "Prevendo"},
     "stage_import": {"en": "Importing dialogues", "pt": "Importando diálogos"},
     "stage_translate": {"en": "Translating", "pt": "Traduzindo"},
+    "stage_tune": {"en": "Tuning hyperparameters", "pt": "Ajustando hiperparâmetros"},
+    "stage_calibrate": {"en": "Calibrating policy", "pt": "Calibrando política"},
     "stage_encode": {"en": "Encoding text", "pt": "Codificando texto"},
     "status_running": {"en": "running", "pt": "rodando"},
     "status_done": {"en": "done", "pt": "concluído"},
@@ -205,8 +223,8 @@ MESSAGES = {
     },
     "cli_state": {"en": "text describing the current situation", "pt": "texto que descreve a situação atual"},
     "cli_threshold": {
-        "en": "minimum confidence to act without review (default: 0.7)",
-        "pt": "confiança mínima para agir sem revisão (padrão: 0,7)",
+        "en": "minimum confidence to act without review (default: the policy's per-action thresholds)",
+        "pt": "confiança mínima para agir sem revisão (padrão: limiares por ação da política)",
     },
     "cli_test": {"en": "separate test CSV", "pt": "CSV de teste separado"},
     "cli_recent_fraction": {
@@ -230,6 +248,18 @@ MESSAGES = {
     "cli_jobs": {"en": "show training and import jobs with their progress", "pt": "mostra os jobs de treino e importação com o progresso"},
     "cli_watch": {"en": "refresh every second until interrupted", "pt": "atualiza a cada segundo até ser interrompido"},
     "cli_no_progress": {"en": "do not draw progress bars", "pt": "não desenha barras de progresso"},
+    "cli_tune": {
+        "en": "search the [tuning] grid of a scenario for the best model parameters",
+        "pt": "procura na grade [tuning] do cenário os melhores parâmetros do modelo",
+    },
+    "cli_calibrate": {
+        "en": "choose per-action thresholds that minimize the policy's expected cost",
+        "pt": "escolhe limiares por ação que minimizam o custo esperado da política",
+    },
+    "cli_write": {
+        "en": "save the result into configs/<scenario>.toml",
+        "pt": "grava o resultado em configs/<cenario>.toml",
+    },
     "cli_trip": {"en": "JSON file with the request and offers", "pt": "arquivo JSON com o pedido e as ofertas"},
 }
 
