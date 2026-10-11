@@ -20,6 +20,7 @@ from .progress import Job, describe, list_jobs, set_terminal
 from .scenarios import ROOT, SCENARIO_ALIASES, get_scenario
 from .schemas import FlightRequest
 from .sgd import SCHEMA_ALIASES, SCHEMAS, convert
+from .vision import inspect_image
 
 
 def build_parser(lang: str) -> argparse.ArgumentParser:
@@ -84,6 +85,13 @@ def build_parser(lang: str) -> argparse.ArgumentParser:
     flights_cmd = command("rank-flights", "avaliar-passagens", "cli_rank_flights")
     flights_cmd.add_argument("trip", type=Path, help=t("cli_trip", lang))
 
+    image_cmd = commands.add_parser("inspect-image", aliases=["inspecionar-imagem"],
+                                    help="detect people, animals and objects in an image")
+    image_cmd.set_defaults(command="inspect-image")
+    image_cmd.add_argument("image", type=Path)
+    image_cmd.add_argument("--output", "--saida", type=Path)
+    image_cmd.add_argument("--threshold", "--limiar", type=float, default=0.5)
+
     tune_cmd = command("tune", "ajustar", "cli_tune")
     scenario_argument(tune_cmd)
     tune_cmd.add_argument("--write", "--gravar", action="store_true", help=t("cli_write", lang))
@@ -139,6 +147,8 @@ def run(args: argparse.Namespace, lang: str) -> dict:
     if args.command == "rank-flights":
         trip = FlightRequest.model_validate(json.loads(args.trip.read_text(encoding="utf-8")))
         return rank_flights(trip.model_dump(exclude_none=True), lang)
+    if args.command == "inspect-image":
+        return inspect_image(args.image, args.output, args.threshold)
 
     scenario = get_scenario(args.scenario)
     params = replace(scenario.params, min_df=args.min_df) if getattr(args, "min_df", None) else scenario.params
@@ -182,7 +192,7 @@ def main(argv: list[str] | None = None) -> None:
             result = run(args, lang)
     except LocalizedError as error:
         parser.error(error.message(lang))
-    except (ValidationError, FileNotFoundError) as error:
+    except (ValidationError, FileNotFoundError, ValueError, ImportError) as error:
         parser.error(str(error))
     print(json.dumps(result, ensure_ascii=False, indent=2))
 

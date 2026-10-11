@@ -10,3 +10,4 @@ data/external/
 data/labeled_*.csv
 .vscode/
 jobs/
+_vizdoom.ini
