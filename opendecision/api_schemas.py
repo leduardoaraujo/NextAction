@@ -20,6 +20,19 @@ class ActionResponse(StrictModel):
     proxima_acao: str
     probabilidades_estimadas: dict[str, float]
     pedir_revisao: bool
+    decisao_id: str | None = None
+
+
+class FeedbackRequest(StrictModel):
+    acao_final: str = Field(pattern=r"^[a-z0-9_]{1,64}$")
+    resultado: str | None = Field(default=None, max_length=500)
+    comentario: str | None = Field(default=None, max_length=2000)
+
+
+class FeedbackResponse(StrictModel):
+    decisao_id: str
+    acao_final: str
+    registrado_em: str
 
 
 class Pesos(StrictModel):

@@ -99,6 +99,46 @@ Para executar os testes Python:
 .\.venv\Scripts\python -m unittest discover -s tests -v
 ```
 
+## Coletar decisões reais e avaliar
+
+Para aprender com casos reais, cada resposta de `POST /v1/actions/decide` traz um `decisao_id`. A API guarda o estado recebido, a ação sugerida e as probabilidades em `registros/decisoes.jsonl`. Quando uma pessoa ou o agente souber qual ação deveria ter sido tomada, informe essa ação:
+
+```powershell
+Invoke-RestMethod -Method Post http://127.0.0.1:8000/v1/decisions/<decisao_id>/feedback `
+  -ContentType "application/json" -Body '{"acao_final": "pedir_confirmacao", "comentario": "o viajante já tinha escolhido"}'
+```
+
+A `acao_final` pode ser uma ação que o modelo ainda não conhece; assim aparecem ações que faltam. Os estados podem conter dados pessoais: o arquivo fica fora do git e pode ser desativado com `$env:OPENDECISION_REGISTRO = ""` antes de iniciar o servidor.
+
+Transforme as decisões revisadas em CSV de treino (ordem cronológica) e avalie:
+
+```powershell
+.\.venv\Scripts\python -m opendecision exportar-rotulos passagens
+.\.venv\Scripts\python -m opendecision avaliar --dados dados/rotulados_passagens.csv --fracao-final 0.2
+```
+
+`avaliar` usa validação cruzada por padrão, `--teste` para um CSV separado ou `--fracao-final` para testar nos casos mais recentes, que é o mais próximo do uso futuro. O relatório mostra acurácia contra a classe majoritária, precisão e revocação por ação, matriz de confusão, erro de calibração e, para cada limiar, quantas decisões seriam automáticas, quantos erros passariam sem revisão e quantas iriam para revisão. Escolha o limiar pelo custo dos erros, não pela acurácia geral.
+
+Na base sintética de passagens, a validação cruzada dá 0,50 de acurácia e nenhuma previsão chega a 0,50 de confiança: com o limiar padrão, tudo iria para revisão.
+
+## Publicar no Hugging Face
+
+O comando `exportar-hf` treina o cenário a partir do CSV e gera uma pasta pronta para o Hub: `model.skops`, `dados_treino.csv` e `README.md` (model card com metadados). O formato [skops](https://skops.readthedocs.io/) evita publicar pickle: quem baixa o modelo não executa código arbitrário ao carregá-lo.
+
+```powershell
+.\.venv\Scripts\python -m pip install -r requirements-hf.txt
+.\.venv\Scripts\python -m opendecision exportar-hf passagens --repo seu-usuario/opendecision-passagens --licenca mit
+```
+
+Revise `hf/passagens/README.md` e depois envie a pasta com um token de escrita:
+
+```powershell
+.\.venv\Scripts\hf auth login
+.\.venv\Scripts\hf upload seu-usuario/opendecision-passagens hf/passagens . --repo-type model
+```
+
+Troque `passagens` por `pesquisa` para o outro classificador. A pasta `hf/` fica fora do git.
+
 ## Referências
 
 - [Apresentação oficial do Jev](https://typesafe.ai/blog/introducing-system-one-models-and-jev)

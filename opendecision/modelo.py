@@ -19,7 +19,8 @@ def novo_modelo():
     )
 
 
-def treinar(dados: Path, destino: Path) -> dict:
+def ajustar(dados: Path):
+    """Avalia em uma divisão de teste e devolve o modelo ajustado em todos os exemplos."""
     estados, acoes = carregar_exemplos(dados)
     total_teste = max(len(set(acoes)), round(len(estados) * 0.25))
     treino_x, teste_x, treino_y, teste_y = train_test_split(
@@ -31,16 +32,20 @@ def treinar(dados: Path, destino: Path) -> dict:
 
     modelo = novo_modelo()
     modelo.fit(estados, acoes)
-    destino.parent.mkdir(parents=True, exist_ok=True)
-    joblib.dump(modelo, destino)
-    return {
-        "modelo_salvo_em": str(destino),
+    return modelo, {
         "exemplos": len(estados),
         "acoes": sorted(set(acoes)),
         "exemplos_de_teste": len(teste_x),
         "acuracia_no_teste": round(acuracia, 3),
         "aviso": "A base de demonstração é pequena; esta métrica não valida uso real.",
     }
+
+
+def treinar(dados: Path, destino: Path) -> dict:
+    modelo, resumo = ajustar(dados)
+    destino.parent.mkdir(parents=True, exist_ok=True)
+    joblib.dump(modelo, destino)
+    return {"modelo_salvo_em": str(destino), **resumo}
 
 
 def decidir(arquivo_modelo: Path, estado: str, limiar: float) -> dict:
