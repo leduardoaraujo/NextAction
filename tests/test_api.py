@@ -1,4 +1,4 @@
-"""Contratos HTTP da API REST."""
+"""HTTP contracts of the REST API, in English and with Portuguese aliases."""
 
 import json
 import tempfile
@@ -9,97 +9,119 @@ from unittest.mock import patch
 from fastapi.testclient import TestClient
 
 from opendecision.api import MODEL_PATHS, app
-from opendecision.modelo import treinar
-
+from opendecision.model import train
 
 ROOT = Path(__file__).resolve().parents[1]
+SEARCH_STATE = "Tenho origem GRU destino REC ida 12/11 e ainda não consultei voos"
 
 
 class ApiTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.temp = tempfile.TemporaryDirectory()
-        cls.model_path = Path(cls.temp.name) / "passagens.joblib"
-        treinar(ROOT / "dados" / "passagens.csv", cls.model_path)
-        cls.registro = patch("opendecision.api.REGISTRO", Path(cls.temp.name) / "decisoes.jsonl")
-        cls.registro.start()
+        cls.model_path = Path(cls.temp.name) / "flights.joblib"
+        train(ROOT / "data" / "flights.csv", cls.model_path)
+        cls.models = patch.dict(MODEL_PATHS, {"flights": cls.model_path})
+        cls.log = patch("opendecision.api.DECISION_LOG", Path(cls.temp.name) / "decisions.jsonl")
+        cls.models.start()
+        cls.log.start()
         cls.client = TestClient(app)
 
     @classmethod
     def tearDownClass(cls):
         cls.client.close()
-        cls.registro.stop()
+        cls.log.stop()
+        cls.models.stop()
         cls.temp.cleanup()
 
-    def test_health_e_openapi(self):
+    def trip(self):
+        return json.loads((ROOT / "data" / "trip_example.json").read_text(encoding="utf-8"))
+
+    def test_health_and_openapi(self):
         self.assertEqual(self.client.get("/health").json(), {"status": "ok"})
         routes = self.client.get("/openapi.json").json()["paths"]
         self.assertIn("/v1/actions/decide", routes)
         self.assertIn("/v1/flights/evaluate", routes)
 
-    def test_decisao_de_acao(self):
-        with patch.dict(MODEL_PATHS, {"passagens": self.model_path}):
-            response = self.client.post("/v1/actions/decide", json={
-                "cenario": "passagens",
-                "estado": "Tenho origem GRU destino REC ida 12/11 e ainda não consultei voos",
-            })
+    def test_decide_in_english(self):
+        response = self.client.post("/v1/actions/decide", json={"scenario": "flights", "state": SEARCH_STATE})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["proxima_acao"], "buscar_voos")
-        self.assertIn("probabilidades_estimadas", response.json())
+        body = response.json()
+        self.assertEqual(body["action"], "search")
+        self.assertEqual(body["type"], "choice")
+        self.assertIn("probabilities", body)
+        self.assertIn("decision_id", body)
 
-    def test_feedback_vincula_acao_final_a_decisao(self):
-        with patch.dict(MODEL_PATHS, {"passagens": self.model_path}):
-            decisao = self.client.post("/v1/actions/decide", json={
-                "cenario": "passagens", "estado": "O viajante escolheu o voo das 8h",
-            }).json()
+    def test_decide_accepts_portuguese_fields_and_scenario(self):
         response = self.client.post(
-            f"/v1/decisions/{decisao['decisao_id']}/feedback",
+            "/v1/actions/decide", json={"cenario": "passagens", "estado": SEARCH_STATE, "limiar": 0.5}
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["action"], "search")
+
+    def test_feedback_links_final_action_and_normalizes_portuguese_label(self):
+        decision = self.client.post(
+            "/v1/actions/decide", json={"scenario": "flights", "state": "O viajante escolheu o voo das 8h"}
+        ).json()
+        response = self.client.post(
+            f"/v1/decisions/{decision['decision_id']}/feedback",
             json={"acao_final": "pedir_confirmacao", "comentario": "já havia escolha"},
         )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["acao_final"], "pedir_confirmacao")
+        self.assertEqual(response.json()["final_action"], "confirm")
 
-    def test_feedback_de_decisao_inexistente_retorna_404(self):
-        response = self.client.post("/v1/decisions/naoexiste/feedback", json={"acao_final": "buscar_voos"})
+    def test_feedback_for_unknown_decision_is_localized(self):
+        response = self.client.post(
+            "/v1/decisions/missing/feedback", json={"final_action": "search"},
+            headers={"Accept-Language": "pt-BR,pt;q=0.9"},
+        )
         self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.json()["detail"], "Decisão não encontrada.")
 
-    def test_feedback_com_acao_invalida_retorna_422(self):
-        response = self.client.post("/v1/decisions/x/feedback", json={"acao_final": "Buscar Voos!"})
+    def test_invalid_feedback_action_returns_422(self):
+        response = self.client.post("/v1/decisions/x/feedback", json={"final_action": "Search Flights!"})
         self.assertEqual(response.status_code, 422)
 
-    def test_modelo_ausente_retorna_503(self):
-        with patch.dict(MODEL_PATHS, {"passagens": self.model_path.parent / "ausente.joblib"}):
-            response = self.client.post("/v1/actions/decide", json={
-                "cenario": "passagens", "estado": "Preciso buscar uma passagem",
-            })
-        self.assertEqual(response.status_code, 503)
+    def test_missing_model_returns_localized_503(self):
+        with patch.dict(MODEL_PATHS, {"flights": self.model_path.parent / "missing.joblib"}):
+            english = self.client.post("/v1/actions/decide", json={"scenario": "flights", "state": "x"})
+            portuguese = self.client.post(
+                "/v1/actions/decide", json={"scenario": "flights", "state": "x"},
+                headers={"Accept-Language": "pt"},
+            )
+        self.assertEqual(english.status_code, 503)
+        self.assertIn("unavailable", english.json()["detail"])
+        self.assertIn("indisponível", portuguese.json()["detail"])
 
-    def test_limiar_invalido_retorna_422(self):
-        response = self.client.post("/v1/actions/decide", json={
-            "cenario": "passagens", "estado": "Teste", "limiar": 1.5,
-        })
-        self.assertEqual(response.status_code, 422)
+    def test_unknown_scenario_and_invalid_threshold_return_422(self):
+        for body in ({"scenario": "hotels", "state": "x"}, {"scenario": "flights", "state": "x", "threshold": 1.5}):
+            self.assertEqual(self.client.post("/v1/actions/decide", json=body).status_code, 422)
 
-    def test_avaliacao_de_voos(self):
-        cenario = json.loads((ROOT / "dados" / "viagem_exemplo.json").read_text(encoding="utf-8"))
-        response = self.client.post("/v1/flights/evaluate", json=cenario)
+    def test_rank_flights(self):
+        response = self.client.post("/v1/flights/evaluate", json=self.trip())
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["recomendacao"], "voo_a")
-        self.assertEqual(response.json()["descartadas"][0]["id"], "voo_b")
+        self.assertEqual(response.json()["recommendation"], "flight_a")
+        self.assertEqual(response.json()["discarded"][0]["id"], "flight_b")
 
-    def test_pede_dado_ausente(self):
+    def test_rank_flights_accepts_portuguese_fields(self):
         response = self.client.post("/v1/flights/evaluate", json={
-            "pedido": {"origem": "GRU", "destino": "REC"},
-        })
+            "pedido": {"origem": "GRU", "destino": "REC", "data_ida": "2026-11-12", "passageiros": 1},
+            "ofertas": [{"id": "a", "preco_total": 900, "duracao_min": 180, "escalas": 0, "bagagem_incluida": True}],
+            "oferta_escolhida": "a",
+        }, headers={"Accept-Language": "pt"})
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["acao"], "perguntar_dados")
-        self.assertIn("data_ida", response.json()["campos_faltantes"])
+        self.assertEqual(response.json()["action"], "confirm")
+        self.assertIn("Confirme", response.json()["notice"])
 
-    def test_oferta_invalida_retorna_422(self):
-        cenario = json.loads((ROOT / "dados" / "viagem_exemplo.json").read_text(encoding="utf-8"))
-        cenario["ofertas"][0]["preco_total"] = -1
-        response = self.client.post("/v1/flights/evaluate", json=cenario)
-        self.assertEqual(response.status_code, 422)
+    def test_missing_trip_field_asks(self):
+        response = self.client.post("/v1/flights/evaluate", json={"request": {"origin": "GRU", "destination": "REC"}})
+        self.assertEqual(response.json()["action"], "ask")
+        self.assertIn("departure_date", response.json()["missing_fields"])
+
+    def test_invalid_offer_returns_422(self):
+        trip = self.trip()
+        trip["offers"][0]["total_price"] = -1
+        self.assertEqual(self.client.post("/v1/flights/evaluate", json=trip).status_code, 422)
 
 
 if __name__ == "__main__":

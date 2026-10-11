@@ -1,0 +1,40 @@
+{
+  "request": {
+    "origin": "GRU",
+    "destination": "REC",
+    "departure_date": "2026-11-12",
+    "return_date": "2026-11-19",
+    "passengers": 1,
+    "max_budget": 1400,
+    "max_stops": 1,
+    "baggage_required": true,
+    "weights": {
+      "price": 0.5,
+      "duration": 0.3,
+      "stops": 0.2
+    }
+  },
+  "offers": [
+    {
+      "id": "flight_a",
+      "total_price": 1100,
+      "duration_min": 190,
+      "stops": 0,
+      "baggage_included": true
+    },
+    {
+      "id": "flight_b",
+      "total_price": 850,
+      "duration_min": 320,
+      "stops": 1,
+      "baggage_included": false
+    },
+    {
+      "id": "flight_c",
+      "total_price": 1250,
+      "duration_min": 165,
+      "stops": 0,
+      "baggage_included": true
+    }
+  ]
+}
