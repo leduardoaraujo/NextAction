@@ -6,8 +6,8 @@ from pathlib import Path
 
 import skops.io as sio
 
-from opendecision.hub import export
-from opendecision.i18n import LocalizedError
+from nextaction.hub import export
+from nextaction.i18n import LocalizedError
 
 
 class ExportTest(unittest.TestCase):

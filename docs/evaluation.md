@@ -1,6 +1,6 @@
 # Evaluation
 
-A decision model is only useful if you know **how often it is wrong, on which actions, and how much you can automate safely**. `opendecision evaluate <scenario>` answers those three questions.
+A decision model is only useful if you know **how often it is wrong, on which actions, and how much you can automate safely**. `nextaction evaluate <scenario>` answers those three questions.
 
 ## Choosing the test data
 

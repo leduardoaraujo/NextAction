@@ -4,7 +4,7 @@ The `agent` scenario learns the next action of a task-oriented assistant from th
 
 ## From dialogue acts to agent actions
 
-Every assistant turn in SGD is annotated with dialogue acts and, when the assistant queried or changed something, with a `service_call`. `opendecision/sgd.py` turns each assistant turn into one training example, deriving the action from those annotations:
+Every assistant turn in SGD is annotated with dialogue acts and, when the assistant queried or changed something, with a `service_call`. `nextaction/sgd.py` turns each assistant turn into one training example, deriving the action from those annotations:
 
 | Action | Derived from | Meaning for an agent |
 | --- | --- | --- |
@@ -18,7 +18,7 @@ Every assistant turn in SGD is annotated with dialogue acts and, when the assist
 | `offer_more_help` | `REQ_MORE` | ask whether the user needs anything else |
 | `end_conversation` | `GOODBYE` | close the conversation |
 
-When a turn has several acts, the first match in the table wins; `search` comes first because a query preceding the reply is the decision that matters. These labels are the project-wide vocabulary in `opendecision/vocabulary.py`, so the `flights` and `research` scenarios use the same names.
+When a turn has several acts, the first match in the table wins; `search` comes first because a query preceding the reply is the decision that matters. These labels are the project-wide vocabulary in `nextaction/vocabulary.py`, so the `flights` and `research` scenarios use the same names.
 
 ## State format
 
@@ -41,11 +41,11 @@ To use the model in your own agent, build the same string from the state you alr
 ```bash
 git clone --depth 1 https://github.com/google-research-datasets/dstc8-schema-guided-dialogue data/external/sgd
 for split in train dev test; do
-  opendecision import-sgd data/external/sgd/$split --output data/external/sgd_generic_$split.csv
+  nextaction import-sgd data/external/sgd/$split --output data/external/sgd_generic_$split.csv
 done
 
-opendecision evaluate agent      # trains on train, evaluates on the official test split
-opendecision train agent         # writes models/agent.joblib
+nextaction evaluate agent      # trains on train, evaluates on the official test split
+nextaction train agent         # writes models/agent.joblib
 ```
 
 Training on 165k examples takes a few minutes on a laptop CPU. The scenario uses `min_df=5`, which drops terms seen in fewer than five turns: the vocabulary shrinks from 178k to 54k terms with no loss of accuracy (0.900 → 0.902), and with skops compression the exported model goes from 125 MB to 4.7 MB.

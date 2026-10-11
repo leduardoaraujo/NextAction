@@ -6,9 +6,9 @@ Install the API extra, train the models you want to serve, then start the server
 
 ```bash
 pip install -e ".[api]"
-opendecision train flights
-opendecision train research
-uvicorn opendecision.api:app --reload
+nextaction train flights
+nextaction train research
+uvicorn nextaction.api:app --reload
 ```
 
 Interactive OpenAPI docs are served at `http://127.0.0.1:8000/docs`. The `agent` model requires the SGD data; see [sgd-model.md](sgd-model.md).
@@ -56,13 +56,13 @@ curl -s http://127.0.0.1:8000/v1/decisions/<decision_id>/feedback -H "Content-Ty
 
 - `final_action` may be an action the model does not know yet. That is how missing actions surface.
 - The log is append-only; if a decision receives several feedback entries, the last one wins.
-- States can contain personal data. The log is git-ignored, and `OPENDECISION_LOG=""` disables it.
+- States can contain personal data. The log is git-ignored, and `NEXTACTION_LOG=""` disables it.
 
 Turn reviewed decisions into training data and evaluate on the most recent cases:
 
 ```bash
-opendecision export-labels flights          # → data/labeled_flights.csv
-opendecision evaluate flights --data data/labeled_flights.csv --recent-fraction 0.2
+nextaction export-labels flights          # → data/labeled_flights.csv
+nextaction evaluate flights --data data/labeled_flights.csv --recent-fraction 0.2
 ```
 
 The export also reports how many suggestions were corrected, which is a first production error rate.
@@ -97,19 +97,19 @@ curl -s -H "Accept-Language: pt-BR" http://127.0.0.1:8000/v1/decisions/unknown/f
 # {"detail": "Decisão não encontrada."}
 ```
 
-The CLI uses `--lang pt` or the `OPENDECISION_LANG` environment variable, and its commands have Portuguese aliases (`opendecision decidir passagens "…"`).
+The CLI uses `--lang pt` or the `NEXTACTION_LANG` environment variable, and its commands have Portuguese aliases (`nextaction decidir passagens "…"`).
 
 ## Flight offer ranking
 
-`/v1/flights/evaluate` and `opendecision rank-flights data/trip_example.json` apply explicit rules: ask for missing fields, search when there are no offers, discard offers that break budget, stop or baggage limits (`over_budget`, `too_many_stops`, `missing_required_baggage`), rank the rest by weighted price, duration and stops, and ask for confirmation once an offer is chosen. The score only orders offers; it is not a probability. See [scenarios/flights.md](scenarios/flights.md).
+`/v1/flights/evaluate` and `nextaction rank-flights data/trip_example.json` apply explicit rules: ask for missing fields, search when there are no offers, discard offers that break budget, stop or baggage limits (`over_budget`, `too_many_stops`, `missing_required_baggage`), rank the rest by weighted price, duration and stops, and ask for confirmation once an offer is chosen. The score only orders offers; it is not a probability. See [scenarios/flights.md](scenarios/flights.md).
 
 ## Rust client
 
-A typed client in `clients/rust` consumes the same contract. Trip files may use English or Portuguese keys, and `OPENDECISION_LANG` is forwarded as `Accept-Language`.
+A typed client in `clients/rust` consumes the same contract. Trip files may use English or Portuguese keys, and `NEXTACTION_LANG` is forwarded as `Accept-Language`.
 
 ```bash
 cargo run --manifest-path clients/rust/Cargo.toml -- action flights "Tenho origem GRU destino REC e ainda não consultei voos"
 cargo run --manifest-path clients/rust/Cargo.toml -- flights data/trip_example.json
 ```
 
-It targets `http://127.0.0.1:8000` by default; set `OPENDECISION_API_URL` to change it.
+It targets `http://127.0.0.1:8000` by default; set `NEXTACTION_API_URL` to change it.

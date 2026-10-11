@@ -8,8 +8,8 @@ from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
-from opendecision.api import MODEL_PATHS, app
-from opendecision.model import train
+from nextaction.api import MODEL_PATHS, app
+from nextaction.model import train
 
 ROOT = Path(__file__).resolve().parents[1]
 SEARCH_STATE = "Tenho origem GRU destino REC ida 12/11 e ainda não consultei voos"
@@ -22,7 +22,7 @@ class ApiTest(unittest.TestCase):
         cls.model_path = Path(cls.temp.name) / "flights.joblib"
         train(ROOT / "data" / "flights.csv", cls.model_path)
         cls.models = patch.dict(MODEL_PATHS, {"flights": cls.model_path})
-        cls.log = patch("opendecision.api.DECISION_LOG", Path(cls.temp.name) / "decisions.jsonl")
+        cls.log = patch("nextaction.api.DECISION_LOG", Path(cls.temp.name) / "decisions.jsonl")
         cls.models.start()
         cls.log.start()
         cls.client = TestClient(app)

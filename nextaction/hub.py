@@ -40,7 +40,7 @@ def export(name: str, destination: Path, repo: str | None = None, license_id: st
     report["model_bytes"] = (destination / MODEL_FILE).stat().st_size
     card = model_card(
         scenario, list(model.classes_), report,
-        repo or f"<user>/opendecision-{scenario.name}", license_id or scenario.license,
+        repo or f"<user>/nextaction-{scenario.name}", license_id or scenario.license,
     )
     (destination / "README.md").write_text(card, encoding="utf-8")
     return {
@@ -69,7 +69,7 @@ def model_card(scenario: Scenario, actions: list[str], report: dict, repo: str, 
     languages = " or ".join(LANGUAGE_NAMES[code] for code in scenario.languages)
     macro_f1 = round(sum(m["f1"] for m in report["per_action"].values()) / len(report["per_action"]), 3)
     split = "test" if scenario.test else "cross-validation"
-    dataset_type = scenario.dataset_id or f"opendecision/{scenario.name}"
+    dataset_type = scenario.dataset_id or f"nextaction/{scenario.name}"
     metadata = [f"language: [{', '.join(scenario.languages)}]"]
     if license_id:
         metadata.append(f"license: {license_id}")
@@ -128,8 +128,8 @@ The state is the dialogue state followed by the last turns, separated by ` || `:
 
 Use `none` for empty tags. Knowing which required slots are `missing` is the strongest signal:
 without the tags, accuracy drops from 0.90 to 0.77. Portuguese tags (`[intencao] [preenchidos]
-[faltando] [pedidos]`, `usuario:`) are accepted by `opendecision.vocabulary.normalize_state`,
-which the OpenDecision package applies before predicting."""
+[faltando] [pedidos]`, `usuario:`) are accepted by `nextaction.vocabulary.normalize_state`,
+which the NextAction package applies before predicting."""
     else:
         input_section = f"""## Input format
 
@@ -149,7 +149,7 @@ A free-text description of the current situation in {languages}, for example {ex
 {chr(10).join(metadata)}
 ---
 
-# OpenDecision: {scenario.name}
+# NextAction: {scenario.name}
 
 A small, auditable classifier that predicts **{scenario.decision}**. Given the current state, it returns
 one action from a fixed vocabulary with a probability for each, so an agent can act alone when it is
@@ -166,7 +166,7 @@ confident and hand the decision to a person when it is not. It ships with a deci
 | Language | {languages} |
 | License | {license_id or "not specified"} |
 | Size | {size_mb:.1f} MB |
-| Code | [github.com/leduardoaraujo/OpenDecision](https://github.com/leduardoaraujo/OpenDecision) |
+| Code | [github.com/leduardoaraujo/NextAction](https://github.com/leduardoaraujo/NextAction) |
 
 ## Uses
 
@@ -193,7 +193,7 @@ print(max(probabilities, key=probabilities.get), probabilities)
 
 Dependencies: `scikit-learn`, `skops` and `huggingface_hub`. Use a scikit-learn version compatible with
 the training one. The full toolkit (CLI, REST API, decision log, evaluation, policy) is in the
-[OpenDecision repository](https://github.com/leduardoaraujo/OpenDecision).
+[NextAction repository](https://github.com/leduardoaraujo/NextAction).
 
 {input_section}
 
@@ -220,7 +220,7 @@ word unigrams and bigrams with accents stripped.
 | calibration | {params.calibration} |
 
 The solver is L-BFGS, run in warm-started chunks so training progress can be reported. Hyperparameters
-live in `{CONFIG_FILE}` and can be searched with `opendecision tune`.
+live in `{CONFIG_FILE}` and can be searched with `nextaction tune`.
 
 ## Evaluation
 
@@ -254,17 +254,17 @@ frequent action would give {report["majority_baseline_accuracy"]}. Expected cali
 ## Citation
 
 ```bibtex
-@software{{araujo2026opendecision,
+@software{{araujo2026nextaction,
   author = {{Araujo, Luiz}},
-  title  = {{OpenDecision: a small, auditable next-action model for AI agents}},
+  title  = {{NextAction: a small, auditable next-action model for AI agents}},
   year   = {{2026}},
-  url    = {{https://github.com/leduardoaraujo/OpenDecision}}
+  url    = {{https://github.com/leduardoaraujo/NextAction}}
 }}
 ```{data_citation}
 
 ## Model card contact
 
-Open an issue in the [OpenDecision repository](https://github.com/leduardoaraujo/OpenDecision/issues).
+Open an issue in the [NextAction repository](https://github.com/leduardoaraujo/NextAction/issues).
 """
 
 
@@ -298,7 +298,7 @@ def policy_card(scenario: Scenario, actions: list[str], simulation: dict | None,
 
 `{CONFIG_FILE}` holds the decision policy used with this model: rules that block impossible actions,
 a minimum confidence per action, risk levels and error costs, in units of one human review
-(`review_cost = {policy.review_cost:g}`). `opendecision calibrate-policy` re-fits the thresholds from the costs.
+(`review_cost = {policy.review_cost:g}`). `nextaction calibrate-policy` re-fits the thresholds from the costs.
 
 | Action | Risk | Min. confidence | Unreviewed error cost | Confirm with user |
 | --- | --- | --- | --- | --- |
@@ -308,11 +308,11 @@ Rules:
 
 {rules}{result}
 
-Apply it with the OpenDecision package (`pip install git+https://github.com/leduardoaraujo/OpenDecision`):
+Apply it with the NextAction package (`pip install git+https://github.com/leduardoaraujo/NextAction`):
 
 ```python
 import tomllib
-from opendecision.policy import apply, from_dict
+from nextaction.policy import apply, from_dict
 
 with open(hf_hub_download("{repo}", "{CONFIG_FILE}"), "rb") as file:
     policy = from_dict(tomllib.load(file)["policy"])

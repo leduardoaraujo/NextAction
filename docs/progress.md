@@ -14,9 +14,9 @@ Fitting model     ━━━━━━━━━━━━━━━━━━━━�
 `--no-progress` hides the bars; the job file is still written. To follow jobs started elsewhere:
 
 ```bash
-opendecision jobs            # list recent jobs
-opendecision jobs --watch    # refresh every second (Ctrl+C to stop)
-opendecision --lang pt tarefas --acompanhar
+nextaction jobs            # list recent jobs
+nextaction jobs --watch    # refresh every second (Ctrl+C to stop)
+nextaction --lang pt tarefas --acompanhar
 ```
 
 ```text
@@ -26,7 +26,7 @@ opendecision --lang pt tarefas --acompanhar
 
 ## In the browser
 
-With the API running (`uvicorn opendecision.api:app`), open `http://127.0.0.1:8000/dashboard`. The page polls `GET /v1/jobs` every two seconds and shows each job's stage, percentage, ETA, status and error. It follows the browser language (English or Portuguese) and the system light or dark theme.
+With the API running (`uvicorn nextaction.api:app`), open `http://127.0.0.1:8000/dashboard`. The page polls `GET /v1/jobs` every two seconds and shows each job's stage, percentage, ETA, status and error. It follows the browser language (English or Portuguese) and the system light or dark theme.
 
 ## Job file
 
@@ -41,7 +41,7 @@ With the API running (`uvicorn opendecision.api:app`), open `http://127.0.0.1:80
 
 - `status` is `running`, `done` or `failed`. A running job without updates for five minutes is reported as `stale`, which usually means the process was killed.
 - `GET /v1/jobs` adds `stage_label` and `status_label` in the language of `Accept-Language`.
-- Files are written atomically at most twice per second. The folder is git-ignored; set `OPENDECISION_JOBS_DIR` to move it.
+- Files are written atomically at most twice per second. The folder is git-ignored; set `NEXTACTION_JOBS_DIR` to move it.
 
 ## What the stages measure
 
@@ -56,7 +56,7 @@ With the API running (`uvicorn opendecision.api:app`), open `http://127.0.0.1:80
 ## Reporting progress from your own code
 
 ```python
-from opendecision.progress import Job, stage
+from nextaction.progress import Job, stage
 
 with Job("my import"):
     with stage("import", total=len(files)) as progress:

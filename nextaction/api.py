@@ -18,11 +18,11 @@ from .schemas import (
 )
 
 MODEL_PATHS = {name: scenario.model for name, scenario in SCENARIOS.items()}
-# Set OPENDECISION_LOG="" to stop storing the states received (OPENDECISION_REGISTRO also works).
-_log = os.environ.get("OPENDECISION_LOG", os.environ.get("OPENDECISION_REGISTRO", str(ROOT / "logs" / "decisions.jsonl")))
+# Set NEXTACTION_LOG="" to stop storing the states received (NEXTACTION_REGISTRO also works).
+_log = os.environ.get("NEXTACTION_LOG", os.environ.get("NEXTACTION_REGISTRO", str(ROOT / "logs" / "decisions.jsonl")))
 DECISION_LOG = Path(_log) if _log else None
 
-app = FastAPI(title="OpenDecision API", version="0.2.0")
+app = FastAPI(title="NextAction API", version="0.2.0")
 
 
 def language(accept_language: Annotated[str | None, Header()] = None) -> str:

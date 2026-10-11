@@ -11,10 +11,10 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from opendecision.cli import main
-from opendecision.policy import ActionPolicy, Policy, Rule, apply, calibrate, evaluate_policy, parse_state
-from opendecision.scenarios import ROOT, get_scenario, load_scenario
-from opendecision.tuning import update_config
+from nextaction.cli import main
+from nextaction.policy import ActionPolicy, Policy, Rule, apply, calibrate, evaluate_policy, parse_state
+from nextaction.scenarios import ROOT, get_scenario, load_scenario
+from nextaction.tuning import update_config
 
 MISSING = "[intent BookFlight] [filled origin] [missing date] [requested none] || user: book a flight"
 COMPLETE = "[intent BookFlight] [filled date origin] [missing none] [requested none] || user: book it"
@@ -96,7 +96,7 @@ class TuningCliTest(unittest.TestCase):
         folder = Path(self.temp.name)
         shutil.copyfile(ROOT / "configs" / "flights.toml", folder / "flights.toml")
         self.config = folder / "flights.toml"
-        self.env = patch.dict(os.environ, {"OPENDECISION_JOBS_DIR": self.temp.name})
+        self.env = patch.dict(os.environ, {"NEXTACTION_JOBS_DIR": self.temp.name})
         self.env.start()
 
     def tearDown(self):
@@ -106,7 +106,7 @@ class TuningCliTest(unittest.TestCase):
     def run_cli(self, *argv):
         scenario = load_scenario(self.config)
         output = io.StringIO()
-        with patch("opendecision.cli.get_scenario", return_value=scenario), contextlib.redirect_stdout(output):
+        with patch("nextaction.cli.get_scenario", return_value=scenario), contextlib.redirect_stdout(output):
             main(["--no-progress", *argv])
         return json.loads(output.getvalue())
 

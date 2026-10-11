@@ -3,8 +3,8 @@
 import unittest
 from pathlib import Path
 
-from opendecision.evaluation import evaluate, metrics
-from opendecision.i18n import LocalizedError
+from nextaction.evaluation import evaluate, metrics
+from nextaction.i18n import LocalizedError
 
 DATA = Path(__file__).resolve().parents[1] / "data" / "flights.csv"
 

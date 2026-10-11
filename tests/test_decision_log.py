@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from opendecision.decision_log import export_labels, read, record_decision, record_feedback
+from nextaction.decision_log import export_labels, read, record_decision, record_feedback
 
 
 def _decision(action):

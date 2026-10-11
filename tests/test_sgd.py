@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from opendecision.sgd import convert
+from nextaction.sgd import convert
 
 
 def _user(text, filled):

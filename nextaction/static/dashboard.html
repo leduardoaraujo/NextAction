@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OpenDecision Jobs</title>
+<title>NextAction Jobs</title>
 <style>
   :root {
     --bg: #f7f7f8; --card: #ffffff; --text: #1b1b1f; --muted: #6b6b76; --border: #e3e3e8;
@@ -47,8 +47,8 @@
 <script>
   const pt = navigator.language.toLowerCase().startsWith("pt");
   const text = pt
-    ? { title: "Jobs do OpenDecision", updated: "Atualizado às", empty: "Nenhum job ainda. Rode, por exemplo, `opendecision train agent`.", eta: "restante", offline: "API indisponível" }
-    : { title: "OpenDecision jobs", updated: "Updated at", empty: "No jobs yet. Run, for example, `opendecision train agent`.", eta: "left", offline: "API unavailable" };
+    ? { title: "Jobs do NextAction", updated: "Atualizado às", empty: "Nenhum job ainda. Rode, por exemplo, `nextaction train agent`.", eta: "restante", offline: "API indisponível" }
+    : { title: "NextAction jobs", updated: "Updated at", empty: "No jobs yet. Run, for example, `nextaction train agent`.", eta: "left", offline: "API unavailable" };
   document.documentElement.lang = pt ? "pt-BR" : "en";
   document.getElementById("title").textContent = text.title;
   const colors = { running: "var(--running)", done: "var(--done)", failed: "var(--failed)", stale: "var(--stale)" };
