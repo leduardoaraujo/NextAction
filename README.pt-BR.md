@@ -53,9 +53,17 @@ Os comandos, as opções, os campos da API, os nomes das ações, as colunas do 
 | Campos da API | `scenario`, `state`, `threshold` | `cenario`, `estado`, `limiar` |
 | Ações | `ask`, `search`, `confirm` | `perguntar`, `buscar`, `confirmar` |
 
+## Demo: Pac-Man
+
+O modelo escolhendo o próximo movimento do Pac-Man em tempo real. A tela mostra cada decisão: a probabilidade de cada movimento, as jogadas bloqueadas pela política e os momentos em que o modelo passa a jogada para o especialista por estar inseguro.
+
+![NextAction jogando Pac-Man](demos/pacman/pacman.gif)
+
+Treinado imitando um jogador baseado em regras, o modelo empata com ele em 300 partidas inéditas (39% a 40% de vitórias, contra 35%, com intervalos de confiança sobrepostos) e pede ajuda em 3,3% das jogadas. Os scripts para reproduzir tudo estão em [demos/pacman](demos/pacman/README.md).
+
 ## Testes
 
-São **61 testes automatizados, todos passando, com 87% de cobertura**. O CI roda a suíte no Python 3.12 e 3.13 a cada push e pull request e publica o relatório completo no resumo da execução. A lista de cada teste com resultado, tempo e cobertura por módulo está em [docs/testing.md](docs/testing.md).
+São **66 testes automatizados, todos passando, com 88% de cobertura**. O CI roda a suíte no Python 3.12 e 3.13 a cada push e pull request e publica o relatório completo no resumo da execução. A lista de cada teste com resultado, tempo e cobertura por módulo está em [docs/testing.md](docs/testing.md).
 
 Os números do modelo também são medidos, não estimados: cada resultado vem de um conjunto de teste separado e pode ser reproduzido com `nextaction evaluate agent`.
 
