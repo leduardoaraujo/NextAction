@@ -1,6 +1,6 @@
 # OpenDecision
 
-*Read in English: [README.md](README.md)*
+*Read in English: [README.md](README.md)* · Modelos no Hugging Face: [opendecision-agent](https://huggingface.co/ludolua/opendecision-agent), [opendecision-flights](https://huggingface.co/ludolua/opendecision-flights)
 
 **Um modelo pequeno e auditável que decide a próxima ação de agentes de IA.** A partir do estado atual de uma conversa, o OpenDecision prevê o que o agente deve fazer em seguida (perguntar, buscar, apresentar opções, confirmar, executar, encerrar). Cada previsão vem com a probabilidade de cada ação e um limiar que manda os casos incertos para revisão humana. Funciona em **inglês e português**.
 

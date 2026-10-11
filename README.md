@@ -10,7 +10,7 @@
 ![Languages](https://img.shields.io/badge/languages-EN%20%7C%20PT-6f42c1)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-*Leia em português: [README.pt-BR.md](README.pt-BR.md)*
+*Leia em português: [README.pt-BR.md](README.pt-BR.md)* · Models on the Hub: [opendecision-agent](https://huggingface.co/ludolua/opendecision-agent), [opendecision-flights](https://huggingface.co/ludolua/opendecision-flights)
 
 ```text
 state  →  [intent SearchOnewayFlight] [filled origin_airport] [missing destination_airport departure_date]
@@ -125,7 +125,7 @@ Responses always use the English names. Human-readable messages (errors, warning
 | **Evaluation** | cross-validation, separate test set or most-recent slice; per-action F1, confusion matrix, ECE, threshold table |
 | **Rule-based ranker** | filters and ranks flight offers by budget, baggage, stops, price and duration, with explanations |
 | **Clients** | typed Rust CLI (`clients/rust`) |
-| **Distribution** | skops export plus generated Hugging Face model card |
+| **Distribution** | skops export with a generated model card and the decision policy, published on the [Hugging Face Hub](https://huggingface.co/ludolua/opendecision-agent) |
 
 ## Testing
 
