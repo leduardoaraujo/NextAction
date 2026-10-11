@@ -1,11 +1,14 @@
 # Publishing to Hugging Face
 
+Published models: [ludolua/opendecision-agent](https://huggingface.co/ludolua/opendecision-agent) (generic, SGD) and [ludolua/opendecision-flights](https://huggingface.co/ludolua/opendecision-flights) (synthetic demo).
+
 `export-hf` trains a scenario, evaluates it and writes a folder ready for the Hub:
 
 | File | Content |
 | --- | --- |
 | `model.skops` | the fitted pipeline in [skops](https://skops.readthedocs.io/) format, compressed |
 | `README.md` | model card: metadata, usage snippet, data source, per-action metrics and threshold table |
+| `config.toml` | the scenario config, including the decision policy described in the card |
 | `training_data.csv` | training data, only for the bundled synthetic scenarios |
 
 ## Why skops instead of joblib

@@ -16,7 +16,7 @@ class ExportTest(unittest.TestCase):
             destination = Path(folder) / "flights"
             result = export("passagens", destination, repo="user/test", license_id="mit")
 
-            self.assertEqual(result["files"], ["README.md", "model.skops", "training_data.csv"])
+            self.assertEqual(result["files"], ["README.md", "config.toml", "model.skops", "training_data.csv"])
             model = sio.load(destination / "model.skops")
             state = "Tenho origem GRU destino REC ida 12/11 e ainda não consultei voos"
             self.assertEqual(model.predict([state])[0], "search")
@@ -25,6 +25,8 @@ class ExportTest(unittest.TestCase):
             self.assertTrue(card.startswith("---\nlanguage: [pt]\n"))
             self.assertIn("license: mit", card)
             self.assertIn('hf_hub_download("user/test", "model.skops")', card)
+            self.assertIn("## Decision policy", card)
+            self.assertIn("| `confirm` | medium | 0.8 |", card)
 
     def test_rejects_unknown_scenario(self):
         with tempfile.TemporaryDirectory() as folder, self.assertRaises(LocalizedError):
