@@ -8,6 +8,7 @@ from .avaliacao import avaliar
 from .hub import CENARIOS, exportar
 from .modelo import decidir, treinar
 from .registro import exportar_rotulos
+from .sgd import ESQUEMAS, converter
 from .passagens import avaliar_passagens
 
 
@@ -17,6 +18,7 @@ def main() -> None:
     comando_treino = comandos.add_parser("treinar", help="Treina a partir de um CSV rotulado")
     comando_treino.add_argument("--dados", type=Path, default=Path("dados/exemplos.csv"))
     comando_treino.add_argument("--modelo", type=Path, default=Path("modelos/decisor.joblib"))
+    comando_treino.add_argument("--min-df", type=int, default=1, help="Descarta termos mais raros que isso")
     comando_decisao = comandos.add_parser("decidir", help="Escolhe a próxima ação")
     comando_decisao.add_argument("estado", help="Texto que descreve a situação atual")
     comando_decisao.add_argument("--modelo", type=Path, default=Path("modelos/decisor.joblib"))
@@ -40,23 +42,39 @@ def main() -> None:
     comando_avaliar.add_argument(
         "--fracao-final", type=float, help="Usa as últimas linhas do CSV como teste (ordem cronológica)"
     )
+    comando_avaliar.add_argument("--min-df", type=int, default=1, help="Descarta termos mais raros que isso")
     comando_rotulos = comandos.add_parser(
         "exportar-rotulos", help="Converte decisões com feedback em CSV de treino"
     )
     comando_rotulos.add_argument("cenario", choices=sorted(CENARIOS))
     comando_rotulos.add_argument("--registro", type=Path, default=Path("registros/decisoes.jsonl"))
     comando_rotulos.add_argument("--destino", type=Path, help="Padrão: dados/rotulados_<cenario>.csv")
+    comando_sgd = comandos.add_parser(
+        "importar-sgd", help="Converte um split do Schema-Guided Dialogue em CSV estado,acao"
+    )
+    comando_sgd.add_argument("split", type=Path, help="Pasta train, dev ou test do SGD")
+    comando_sgd.add_argument("--destino", type=Path, required=True)
+    comando_sgd.add_argument("--esquema", choices=ESQUEMAS, default="generico")
+    comando_sgd.add_argument("--contexto", type=int, default=3, help="Turnos anteriores incluídos")
+    comando_sgd.add_argument("--sem-estado", action="store_true", help="Usa só o texto da conversa")
     argumentos = parser.parse_args()
     try:
         if argumentos.comando == "treinar":
-            resultado = treinar(argumentos.dados, argumentos.modelo)
+            resultado = treinar(argumentos.dados, argumentos.modelo, argumentos.min_df)
         elif argumentos.comando == "decidir":
             resultado = decidir(argumentos.modelo, argumentos.estado, argumentos.limiar)
         elif argumentos.comando == "avaliar":
-            resultado = avaliar(argumentos.dados, argumentos.teste, argumentos.fracao_final)
+            resultado = avaliar(
+                argumentos.dados, argumentos.teste, argumentos.fracao_final, argumentos.min_df
+            )
         elif argumentos.comando == "exportar-rotulos":
             destino = argumentos.destino or Path("dados") / f"rotulados_{argumentos.cenario}.csv"
             resultado = exportar_rotulos(argumentos.registro, destino, argumentos.cenario)
+        elif argumentos.comando == "importar-sgd":
+            resultado = converter(
+                argumentos.split, argumentos.destino, argumentos.esquema,
+                argumentos.contexto, not argumentos.sem_estado,
+            )
         elif argumentos.comando == "exportar-hf":
             destino = argumentos.destino or Path("hf") / argumentos.cenario
             resultado = exportar(argumentos.cenario, destino, argumentos.repo, argumentos.licenca)

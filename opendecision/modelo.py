@@ -12,26 +12,37 @@ from sklearn.pipeline import make_pipeline
 from .dados import carregar_exemplos
 
 
-def novo_modelo():
+def novo_modelo(min_df: int = 1):
+    """``min_df`` descarta termos raros; use 2 ou mais em bases grandes para reduzir o arquivo."""
     return make_pipeline(
-        TfidfVectorizer(ngram_range=(1, 2), strip_accents="unicode"),
+        TfidfVectorizer(ngram_range=(1, 2), strip_accents="unicode", min_df=min_df),
         LogisticRegression(max_iter=1000),
     )
 
 
-def ajustar(dados: Path):
+def enxugar(modelo):
+    """Remove ``stop_words_``, a lista de termos descartados guardada só para inspeção.
+
+    Em bases grandes ela pode ter milhões de entradas; a previsão não depende dela.
+    """
+    vetorizador = modelo.steps[0][1]
+    if hasattr(vetorizador, "stop_words_"):
+        delattr(vetorizador, "stop_words_")
+    return modelo
+
+
+def ajustar(dados: Path, min_df: int = 1):
     """Avalia em uma divisão de teste e devolve o modelo ajustado em todos os exemplos."""
     estados, acoes = carregar_exemplos(dados)
     total_teste = max(len(set(acoes)), round(len(estados) * 0.25))
     treino_x, teste_x, treino_y, teste_y = train_test_split(
         estados, acoes, test_size=total_teste, random_state=42, stratify=acoes
     )
-    modelo_avaliacao = novo_modelo()
+    modelo_avaliacao = novo_modelo(min_df)
     modelo_avaliacao.fit(treino_x, treino_y)
     acuracia = accuracy_score(teste_y, modelo_avaliacao.predict(teste_x))
 
-    modelo = novo_modelo()
-    modelo.fit(estados, acoes)
+    modelo = enxugar(novo_modelo(min_df).fit(estados, acoes))
     return modelo, {
         "exemplos": len(estados),
         "acoes": sorted(set(acoes)),
@@ -41,8 +52,8 @@ def ajustar(dados: Path):
     }
 
 
-def treinar(dados: Path, destino: Path) -> dict:
-    modelo, resumo = ajustar(dados)
+def treinar(dados: Path, destino: Path, min_df: int = 1) -> dict:
+    modelo, resumo = ajustar(dados, min_df)
     destino.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(modelo, destino)
     return {"modelo_salvo_em": str(destino), **resumo}

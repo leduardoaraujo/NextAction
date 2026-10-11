@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parent.parent
 MODEL_PATHS = {
     "pesquisa": ROOT / "modelos" / "decisor.joblib",
     "passagens": ROOT / "modelos" / "passagens.joblib",
+    "agente": ROOT / "modelos" / "agente.joblib",
 }
 # Defina OPENDECISION_REGISTRO="" para não guardar os estados recebidos.
 _registro = os.environ.get("OPENDECISION_REGISTRO", str(ROOT / "registros" / "decisoes.jsonl"))

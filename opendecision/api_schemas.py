@@ -10,7 +10,7 @@ class StrictModel(BaseModel):
 
 
 class ActionRequest(StrictModel):
-    cenario: Literal["pesquisa", "passagens"]
+    cenario: Literal["pesquisa", "passagens", "agente"]
     estado: str = Field(min_length=1)
     limiar: float = Field(default=0.70, ge=0, le=1)
 
