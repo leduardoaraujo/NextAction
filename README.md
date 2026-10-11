@@ -12,7 +12,7 @@
 
 > Formerly named OpenDecision. Renamed to NextAction to avoid confusion with an unrelated project of the same name.
 
-*Leia em português: [README.pt-BR.md](README.pt-BR.md)* · Models on the Hub: [nextaction-agent](https://huggingface.co/ludolua/nextaction-agent), [nextaction-flights](https://huggingface.co/ludolua/nextaction-flights)
+*Leia em português: [README.pt-BR.md](README.pt-BR.md)* · Models on the Hub: [nextaction-agent](https://huggingface.co/ludolua/nextaction-agent), [nextaction-flights](https://huggingface.co/ludolua/nextaction-flights), [nextaction-pacman](https://huggingface.co/ludolua/nextaction-pacman), [nextaction-connect4](https://huggingface.co/ludolua/nextaction-connect4)
 
 ```text
 state  →  [intent SearchOnewayFlight] [filled origin_airport] [missing destination_airport departure_date]

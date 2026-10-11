@@ -1,6 +1,6 @@
 # Publishing to Hugging Face
 
-Published models: [ludolua/nextaction-agent](https://huggingface.co/ludolua/nextaction-agent) (generic, SGD) and [ludolua/nextaction-flights](https://huggingface.co/ludolua/nextaction-flights) (synthetic demo).
+Published models: [nextaction-agent](https://huggingface.co/ludolua/nextaction-agent) (generic, SGD), [nextaction-flights](https://huggingface.co/ludolua/nextaction-flights) (synthetic), [nextaction-pacman](https://huggingface.co/ludolua/nextaction-pacman) and [nextaction-connect4](https://huggingface.co/ludolua/nextaction-connect4) (game demos, with their GIFs).
 
 `export-hf` trains a scenario, evaluates it and writes a folder ready for the Hub:
 
