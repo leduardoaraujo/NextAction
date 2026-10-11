@@ -44,6 +44,10 @@ class Scenario:
     validation: Path | None = None
     license: str | None = None
     ship_data: bool = True
+    input_format: str = "text"
+    dataset_id: str | None = None
+    dataset_name: str | None = None
+    citation: str | None = None
     params: ModelParams = ModelParams()
     tuning: dict = field(default_factory=dict)
     policy: Policy = Policy()
@@ -78,6 +82,8 @@ def load_scenario(path: Path) -> Scenario:
             decision=info["decision"], example=info["example"], data_source=info["data_source"],
             languages=tuple(info.get("languages", ("en",))), license=info.get("license"),
             ship_data=bool(info.get("ship_data", True)), config_path=path,
+            input_format=info.get("input", "text"), dataset_id=info.get("dataset_id"),
+            dataset_name=info.get("dataset_name"), citation=info.get("citation"),
             params=model_params(config.get("model", {})),
             tuning=config.get("tuning", {}),
             policy=from_dict(config.get("policy", {})),

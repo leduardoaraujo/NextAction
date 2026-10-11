@@ -52,3 +52,17 @@ def normalize_state(state: str) -> str:
         return f"{match.group(1)}{SPEAKERS[match.group(2).lower()]}:"
 
     return _SPEAKER.sub(speaker, _TAG.sub(tag, state.strip()))
+
+
+ACTION_DESCRIPTIONS = {
+    "ask": "ask the user for missing information",
+    "search": "query a tool, API or database before replying",
+    "present_options": "present options from results already fetched",
+    "answer": "answer a question about an item or the task",
+    "suggest_next_step": "propose the next step, such as booking what was found",
+    "confirm": "confirm the details with the user before a transaction",
+    "execute": "run the transaction (booking, payment, transfer) and report the outcome",
+    "offer_more_help": "ask whether the user needs anything else",
+    "end_conversation": "close the conversation",
+    "revise_criteria": "ask the user to relax criteria that no option satisfies",
+}

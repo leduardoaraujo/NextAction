@@ -26,6 +26,10 @@ class ExportTest(unittest.TestCase):
             self.assertIn("license: mit", card)
             self.assertIn('hf_hub_download("user/test", "model.skops")', card)
             self.assertIn("## Decision policy", card)
+            for section in ("## Model details", "## Uses", "## Input format", "## Actions",
+                            "## Training details", "## Bias, risks and limitations", "## Citation"):
+                self.assertIn(section, card)
+            self.assertIn("model-index:", card)
             self.assertIn("| `confirm` | medium | 0.8 |", card)
 
     def test_rejects_unknown_scenario(self):
