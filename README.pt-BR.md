@@ -51,6 +51,18 @@ Os comandos, as opções, os campos da API, os nomes das ações, as colunas do 
 | Campos da API | `scenario`, `state`, `threshold` | `cenario`, `estado`, `limiar` |
 | Ações | `ask`, `search`, `confirm` | `perguntar`, `buscar`, `confirmar` |
 
+## Testes
+
+São **61 testes automatizados, todos passando, com 87% de cobertura**. O CI roda a suíte no Python 3.12 e 3.13 a cada push e pull request e publica o relatório completo no resumo da execução. A lista de cada teste com resultado, tempo e cobertura por módulo está em [docs/testing.md](docs/testing.md).
+
+Os números do modelo também são medidos, não estimados: cada resultado vem de um conjunto de teste separado e pode ser reproduzido com `opendecision evaluate agent`.
+
+```bash
+pip install -e ".[dev]"
+python -m unittest discover -s tests
+python scripts/test_report.py --output docs/testing.md
+```
+
 ## Documentação
 
 A documentação detalhada está em inglês:
