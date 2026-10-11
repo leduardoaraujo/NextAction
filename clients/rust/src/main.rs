@@ -8,7 +8,9 @@ use std::{collections::BTreeMap, env, error::Error, fs, time::Duration};
 struct ActionRequest<'a> {
     scenario: &'a str,
     state: &'a str,
-    threshold: f64,
+    // None lets the server apply the scenario's per-action thresholds.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    threshold: Option<f64>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -18,6 +20,15 @@ struct ActionResponse {
     action: String,
     probabilities: BTreeMap<String, f64>,
     needs_review: bool,
+    #[serde(default)]
+    requires_confirmation: bool,
+    #[serde(default)]
+    risk: String,
+    threshold: f64,
+    #[serde(default)]
+    reasons: Vec<String>,
+    #[serde(default)]
+    blocked_actions: Vec<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     decision_id: Option<String>,
 }
@@ -157,7 +168,7 @@ fn run() -> Result<(), Box<dyn Error>> {
 
     match args.get(1).map(String::as_str) {
         Some("action") if args.len() == 4 || args.len() == 5 => {
-            let threshold = args.get(4).map_or(Ok(0.70), |v| v.parse::<f64>())?;
+            let threshold = args.get(4).map(|v| v.parse::<f64>()).transpose()?;
             let request = ActionRequest {
                 scenario: &args[2],
                 state: &args[3],

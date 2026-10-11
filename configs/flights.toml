@@ -1,0 +1,44 @@
+# Flight booking assistant (Portuguese, small synthetic dataset for demonstration).
+
+[scenario]
+name = "flights"
+alias = "passagens"
+languages = ["pt"]
+data = "data/flights.csv"
+model = "models/flights.joblib"
+decision = "the next step of an agent that helps find flight tickets"
+example = "Tenho origem GRU destino REC ida 12/11 e ainda não consultei voos"
+data_source = "hand-written **synthetic** examples in Portuguese; they do not come from real users"
+
+[model]
+ngram_range = [1, 2]
+min_df = 1
+C = 1.0
+class_weight = "none"
+max_iter = 1000
+calibration = "none"
+
+[tuning]
+folds = 4
+metric = "f1_macro"
+C = [0.3, 1.0, 3.0, 10.0]
+ngram_range = [[1, 1], [1, 2]]
+
+[policy]
+default_threshold = 0.7
+review_cost = 1.0
+
+[policy.actions.ask]
+unreviewed_error_cost = 2
+
+[policy.actions.search]
+unreviewed_error_cost = 3
+
+[policy.actions.present_options]
+unreviewed_error_cost = 3
+
+[policy.actions.confirm]
+risk = "medium"
+min_confidence = 0.8
+unreviewed_error_cost = 10
+requires_confirmation = true    # a purchase always needs the traveler's explicit approval

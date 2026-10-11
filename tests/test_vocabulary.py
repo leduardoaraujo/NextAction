@@ -9,7 +9,8 @@ import joblib
 from opendecision.data import load_examples
 from opendecision.i18n import LocalizedError
 from opendecision.model import decide, new_model
-from opendecision.vocabulary import normalize_action, normalize_scenario, normalize_state
+from opendecision.scenarios import normalize_scenario
+from opendecision.vocabulary import normalize_action, normalize_state
 
 
 class VocabularyTest(unittest.TestCase):

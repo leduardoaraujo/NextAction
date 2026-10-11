@@ -1,8 +1,6 @@
-"""Canonical action labels, scenario names and state format, with Portuguese aliases."""
+"""Canonical action labels and state format, with Portuguese aliases."""
 
 import re
-
-from .i18n import LocalizedError
 
 ACTIONS = (
     "ask", "search", "present_options", "answer", "suggest_next_step",
@@ -26,9 +24,6 @@ ACTION_ALIASES = {
     "rever_criterios": "revise_criteria",
 }
 
-SCENARIOS = ("agent", "flights", "research")
-SCENARIO_ALIASES = {"agente": "agent", "passagens": "flights", "pesquisa": "research"}
-
 STATE_TAGS = {"intencao": "intent", "preenchidos": "filled", "faltando": "missing", "pedidos": "requested"}
 SPEAKERS = {"usuario": "user", "usuário": "user", "assistente": "assistant"}
 
@@ -40,15 +35,6 @@ def normalize_action(action: str) -> str:
     """Return the canonical English label; unknown labels pass through unchanged."""
     action = action.strip()
     return ACTION_ALIASES.get(action, action)
-
-
-def normalize_scenario(name: str) -> str:
-    key = name.strip().lower()
-    scenario = SCENARIO_ALIASES.get(key, key)
-    if scenario not in SCENARIOS:
-        options = ", ".join(f"{s} ({pt})" for pt, s in SCENARIO_ALIASES.items())
-        raise LocalizedError("unknown_scenario", name=name, options=options)
-    return scenario
 
 
 def normalize_state(state: str) -> str:

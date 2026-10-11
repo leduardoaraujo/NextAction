@@ -6,21 +6,27 @@ from pathlib import Path
 import joblib
 import numpy as np
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 
 from .data import load_examples
 from .i18n import LocalizedError, t
+from .policy import Policy, apply
 from .progress import stage
+from .scenarios import ModelParams
 from .vocabulary import normalize_action, normalize_state
 
 
-def new_model(min_df: int = 1):
-    """``min_df`` drops rare terms; use 2 or more on large datasets to shrink the model file."""
+def new_model(params: ModelParams = ModelParams()):
+    """Build the pipeline from a scenario's ``[model]`` parameters."""
+    classifier = LogisticRegression(C=params.C, class_weight=params.class_weight, max_iter=params.max_iter)
+    if params.calibration != "none":
+        classifier = CalibratedClassifierCV(classifier, method=params.calibration, cv=3)
     return make_pipeline(
-        TfidfVectorizer(ngram_range=(1, 2), strip_accents="unicode", min_df=min_df),
-        LogisticRegression(max_iter=1000),
+        TfidfVectorizer(ngram_range=params.ngram_range, strip_accents="unicode", min_df=params.min_df),
+        classifier,
     )
 
 
@@ -44,6 +50,11 @@ def fit_pipeline(model, states: list[str], actions: list[str], chunk: int = 50):
     vectorizer, classifier = model.steps[0][1], model.steps[-1][1]
     with stage("vectorize", total=len(states)):
         features = vectorizer.fit_transform(states)
+    if not isinstance(classifier, LogisticRegression):
+        # Calibrated models fit several copies internally; report the stage without a percent.
+        with stage("fit"):
+            classifier.fit(features, actions)
+        return model
     max_iter = classifier.max_iter
     classifier.set_params(warm_start=True, max_iter=chunk)
     iterations = 0
@@ -62,13 +73,13 @@ def fit_pipeline(model, states: list[str], actions: list[str], chunk: int = 50):
     return model
 
 
-def fit(data: Path, min_df: int = 1):
+def fit(data: Path, params: ModelParams = ModelParams()):
     states, actions = load_examples(data)
-    return slim(fit_pipeline(new_model(min_df), states, actions)), states, actions
+    return slim(fit_pipeline(new_model(params), states, actions)), states, actions
 
 
-def train(data: Path, destination: Path, min_df: int = 1, lang: str | None = None) -> dict:
-    model, states, actions = fit(data, min_df)
+def train(data: Path, destination: Path, params: ModelParams = ModelParams(), lang: str | None = None) -> dict:
+    model, states, actions = fit(data, params)
     destination.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(model, destination)
     return {
@@ -79,8 +90,9 @@ def train(data: Path, destination: Path, min_df: int = 1, lang: str | None = Non
     }
 
 
-def decide(model_path: Path, state: str, threshold: float = 0.7) -> dict:
-    if not 0 <= threshold <= 1:
+def decide(model_path: Path, state: str, threshold: float | None = None, policy: Policy = Policy()) -> dict:
+    """Predict the next action and apply the decision policy (rules, thresholds, risk)."""
+    if threshold is not None and not 0 <= threshold <= 1:
         raise LocalizedError("threshold_range")
     if not model_path.is_file():
         raise LocalizedError("model_file_missing", path=model_path)
@@ -89,13 +101,7 @@ def decide(model_path: Path, state: str, threshold: float = 0.7) -> dict:
     probabilities = model.predict_proba([normalize_state(state)])[0]
     # Models trained before the English vocabulary have Portuguese labels.
     distribution = {
-        normalize_action(str(action)): round(float(probability), 4)
+        normalize_action(str(action)): float(probability)
         for action, probability in zip(model.classes_, probabilities)
     }
-    action = max(distribution, key=distribution.get)
-    return {
-        "type": "choice",
-        "action": action,
-        "probabilities": distribution,
-        "needs_review": distribution[action] < threshold,
-    }
+    return {"type": "choice", **apply(distribution, state, policy, threshold)}

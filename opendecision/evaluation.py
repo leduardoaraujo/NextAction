@@ -10,19 +10,22 @@ from sklearn.model_selection import StratifiedKFold
 from .data import load_examples
 from .i18n import LocalizedError, t
 from .model import fit_pipeline, new_model
+from .policy import Policy, evaluate_policy
 from .progress import stage
+from .scenarios import ModelParams
 
 THRESHOLDS = (0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
 
 
 def evaluate(
     data: Path, test: Path | None = None, recent_fraction: float | None = None,
-    min_df: int = 1, lang: str | None = None,
+    params: ModelParams = ModelParams(), lang: str | None = None, policy: Policy | None = None,
 ) -> dict:
     """Evaluate by cross-validation, on a separate test CSV, or on the most recent examples.
 
     ``recent_fraction`` uses the last rows of the CSV as the test set without shuffling: with
     data exported from the decision log (chronological order) it measures future performance.
+    With a ``policy``, the report also simulates its rules, thresholds and costs.
     """
     states, actions = load_examples(data)
     if test is not None and recent_fraction is not None:
@@ -30,45 +33,57 @@ def evaluate(
     if test is not None:
         test_x, test_y = load_examples(test)
         method = t("method_test_file", lang, path=test)
-        return _evaluate_split(states, actions, test_x, test_y, method, min_df, lang)
+        return _evaluate_split(states, actions, test_x, test_y, method, params, lang, policy)
     if recent_fraction is not None:
         if not 0 < recent_fraction < 1:
             raise LocalizedError("fraction_range")
         cut = len(states) - max(1, round(len(states) * recent_fraction))
         method = t("method_recent", lang, count=len(states) - cut)
         return _evaluate_split(
-            states[:cut], actions[:cut], states[cut:], actions[cut:], method, min_df, lang
+            states[:cut], actions[:cut], states[cut:], actions[cut:], method, params, lang, policy
         )
 
+    probabilities, classes, folds = cross_validated_probabilities(states, actions, params)
+    majority = Counter(actions).most_common(1)[0][0]
+    result = {
+        "method": t("method_cross_validation", lang, folds=folds),
+        **metrics(actions, probabilities, classes, majority, lang),
+    }
+    if policy is not None:
+        result["policy"] = evaluate_policy(states, actions, probabilities, classes, policy)
+    return result
+
+
+def cross_validated_probabilities(states, actions, params: ModelParams = ModelParams()):
+    """Out-of-fold probabilities for every example, with up to 5 stratified folds."""
     folds = min(5, min(Counter(actions).values()))
     splitter = StratifiedKFold(n_splits=folds, shuffle=True, random_state=42)
     classes = sorted(set(actions))
     probabilities = np.zeros((len(states), len(classes)))
     with stage("cross_validation", total=folds) as progress:
         for train_index, test_index in splitter.split(states, actions):
-            model = new_model(min_df).fit([states[i] for i in train_index], [actions[i] for i in train_index])
+            model = new_model(params).fit([states[i] for i in train_index], [actions[i] for i in train_index])
             columns = [classes.index(label) for label in model.classes_]
             probabilities[np.ix_(test_index, columns)] = model.predict_proba([states[i] for i in test_index])
             progress.advance()
-    majority = Counter(actions).most_common(1)[0][0]
-    return {
-        "method": t("method_cross_validation", lang, folds=folds),
-        **metrics(actions, probabilities, classes, majority, lang),
-    }
+    return probabilities, classes, folds
 
 
-def _evaluate_split(train_x, train_y, test_x, test_y, method: str, min_df: int, lang) -> dict:
+def _evaluate_split(train_x, train_y, test_x, test_y, method: str, params, lang, policy) -> dict:
     if len(set(train_y)) < 2:
         raise LocalizedError("train_needs_two_actions")
-    model = fit_pipeline(new_model(min_df), train_x, train_y)
+    model = fit_pipeline(new_model(params), train_x, train_y)
     majority = Counter(train_y).most_common(1)[0][0]
     with stage("predict", total=len(test_x)):
         probabilities = model.predict_proba(test_x)
+    classes = list(model.classes_)
     result = {"method": method, "train_examples": len(train_x)}
-    result.update(metrics(test_y, probabilities, list(model.classes_), majority, lang))
-    unseen = sorted(set(test_y) - set(model.classes_))
+    result.update(metrics(test_y, probabilities, classes, majority, lang))
+    unseen = sorted(set(test_y) - set(classes))
     if unseen:
         result["actions_missing_from_training"] = unseen
+    if policy is not None:
+        result["policy"] = evaluate_policy(test_x, test_y, probabilities, classes, policy)
     return result
 
 

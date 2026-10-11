@@ -4,7 +4,8 @@ from typing import Annotated, Literal
 
 from pydantic import AfterValidator, AliasChoices, BaseModel, BeforeValidator, ConfigDict, Field
 
-from .vocabulary import normalize_action, normalize_scenario
+from .scenarios import normalize_scenario
+from .vocabulary import normalize_action
 
 
 def field(english: str, portuguese: str, **options):
@@ -15,13 +16,13 @@ class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
-ScenarioName = Annotated[Literal["agent", "flights", "research"], BeforeValidator(normalize_scenario)]
+ScenarioName = Annotated[str, BeforeValidator(normalize_scenario)]
 
 
 class ActionRequest(StrictModel):
     scenario: ScenarioName = field("scenario", "cenario")
     state: str = field("state", "estado", min_length=1)
-    threshold: float = field("threshold", "limiar", default=0.70, ge=0, le=1)
+    threshold: float | None = field("threshold", "limiar", default=None, ge=0, le=1)
 
 
 class ActionResponse(StrictModel):
@@ -29,6 +30,11 @@ class ActionResponse(StrictModel):
     action: str
     probabilities: dict[str, float]
     needs_review: bool
+    requires_confirmation: bool = False
+    risk: str = "low"
+    threshold: float
+    reasons: list[str] = []
+    blocked_actions: list[str] = []
     decision_id: str | None = None
 
 

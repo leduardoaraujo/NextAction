@@ -2,6 +2,7 @@
 
 import argparse
 import json
+from dataclasses import replace
 import sys
 import time
 from pathlib import Path
@@ -14,11 +15,11 @@ from .flights import rank_flights
 from .hub import export
 from .i18n import LocalizedError, resolve_language, t
 from .model import decide, train
+from .tuning import calibrate_policy, tune
 from .progress import Job, describe, list_jobs, set_terminal
-from .scenarios import ROOT, get_scenario
+from .scenarios import ROOT, SCENARIO_ALIASES, get_scenario
 from .schemas import FlightRequest
 from .sgd import SCHEMA_ALIASES, SCHEMAS, convert
-from .vocabulary import SCENARIO_ALIASES
 
 
 def build_parser(lang: str) -> argparse.ArgumentParser:
@@ -46,7 +47,7 @@ def build_parser(lang: str) -> argparse.ArgumentParser:
     scenario_argument(decide_cmd)
     decide_cmd.add_argument("state", help=t("cli_state", lang))
     decide_cmd.add_argument("--model", "--modelo", type=Path, help=t("cli_model", lang))
-    decide_cmd.add_argument("--threshold", "--limiar", type=float, default=0.70, help=t("cli_threshold", lang))
+    decide_cmd.add_argument("--threshold", "--limiar", type=float, help=t("cli_threshold", lang))
 
     evaluate_cmd = command("evaluate", "avaliar", "cli_evaluate")
     scenario_argument(evaluate_cmd)
@@ -83,12 +84,20 @@ def build_parser(lang: str) -> argparse.ArgumentParser:
     flights_cmd = command("rank-flights", "avaliar-passagens", "cli_rank_flights")
     flights_cmd.add_argument("trip", type=Path, help=t("cli_trip", lang))
 
+    tune_cmd = command("tune", "ajustar", "cli_tune")
+    scenario_argument(tune_cmd)
+    tune_cmd.add_argument("--write", "--gravar", action="store_true", help=t("cli_write", lang))
+
+    calibrate_cmd = command("calibrate-policy", "calibrar-politica", "cli_calibrate")
+    scenario_argument(calibrate_cmd)
+    calibrate_cmd.add_argument("--write", "--gravar", action="store_true", help=t("cli_write", lang))
+
     jobs_cmd = command("jobs", "tarefas", "cli_jobs")
     jobs_cmd.add_argument("--watch", "--acompanhar", action="store_true", help=t("cli_watch", lang))
     return parser
 
 
-LONG_COMMANDS = {"train", "evaluate", "import-sgd", "export-hf"}
+LONG_COMMANDS = {"train", "evaluate", "import-sgd", "export-hf", "tune", "calibrate-policy"}
 
 
 def jobs_table(lang: str):
@@ -132,15 +141,19 @@ def run(args: argparse.Namespace, lang: str) -> dict:
         return rank_flights(trip.model_dump(exclude_none=True), lang)
 
     scenario = get_scenario(args.scenario)
+    params = replace(scenario.params, min_df=args.min_df) if getattr(args, "min_df", None) else scenario.params
     if args.command == "train":
-        min_df = args.min_df or scenario.min_df
-        return train(args.data or scenario.data, args.model or scenario.model, min_df, lang)
+        return train(args.data or scenario.data, args.model or scenario.model, params, lang)
     if args.command == "decide":
-        return decide(args.model or scenario.model, args.state, args.threshold)
+        return decide(args.model or scenario.model, args.state, args.threshold, scenario.policy)
     if args.command == "evaluate":
         data = args.data or scenario.data
         test = args.test or (scenario.test if args.data is None and args.recent_fraction is None else None)
-        return evaluate(data, test, args.recent_fraction, args.min_df or scenario.min_df, lang)
+        return evaluate(data, test, args.recent_fraction, params, lang, scenario.policy)
+    if args.command == "tune":
+        return tune(scenario, args.write)
+    if args.command == "calibrate-policy":
+        return calibrate_policy(scenario, args.write)
     if args.command == "export-labels":
         output = args.output or ROOT / "data" / f"labeled_{scenario.name}.csv"
         return export_labels(args.log, output, scenario.name)

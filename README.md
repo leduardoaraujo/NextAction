@@ -23,7 +23,7 @@ action →  ask (0.99)   ✓ automatic, above the 0.9 review threshold
 LLM agents rarely fail at writing sentences; they fail at **control flow**: searching before they know the destination, booking without confirmation, answering when they should ask. OpenDecision isolates that decision into a model that is:
 
 - **Explicit**: one fixed action vocabulary, so every choice can be logged, counted and tested.
-- **Built for hand-off**: each prediction carries probabilities, and a threshold decides what is automated and what goes to review.
+- **Policy-driven**: per-action thresholds, risk levels, error costs and state rules decide what is automated, what is blocked and what goes to review, all set in one TOML file per scenario.
 - **Improvable from use**: every API decision gets an id; corrections sent back become training data.
 - **Cheap**: TF-IDF + logistic regression. Trains on a laptop, predicts in milliseconds, ships as a 5 MB file.
 
@@ -81,7 +81,12 @@ opendecision decide flights "Tenho origem GRU destino REC ida 12/11 e ainda não
   "type": "choice",
   "action": "search",
   "probabilities": { "ask": 0.2085, "confirm": 0.183, "present_options": 0.1922, "search": 0.4163 },
-  "needs_review": true
+  "needs_review": true,
+  "requires_confirmation": false,
+  "risk": "low",
+  "threshold": 0.7,
+  "reasons": ["below_threshold"],
+  "blocked_actions": []
 }
 ```
 
@@ -112,9 +117,11 @@ Responses always use the English names. Human-readable messages (errors, warning
 | | |
 | --- | --- |
 | **Scenarios** | `agent` (generic, real dialogues), `flights` (flight booking), `research` (research agent) |
-| **CLI** | `train`, `decide`, `evaluate`, `import-sgd`, `export-labels`, `export-hf`, `rank-flights`, `jobs` |
+| **CLI** | `train`, `decide`, `evaluate`, `tune`, `calibrate-policy`, `import-sgd`, `export-labels`, `export-hf`, `rank-flights`, `jobs` |
 | **REST API** | decide, feedback, flight-offer ranking, model status, jobs; OpenAPI docs at `/docs` |
 | **Progress tracking** | progress bars in the terminal, `opendecision jobs --watch` and a live web dashboard at `/dashboard` |
+| **Decision policy** | per-action thresholds calibrated from error costs, risk levels, confirmation for irreversible actions, rules that block impossible actions ([docs/policy.md](docs/policy.md)) |
+| **Tuning** | `opendecision tune` searches the hyperparameter grid in the scenario config |
 | **Evaluation** | cross-validation, separate test set or most-recent slice; per-action F1, confusion matrix, ECE, threshold table |
 | **Rule-based ranker** | filters and ranks flight offers by budget, baggage, stops, price and duration, with explanations |
 | **Clients** | typed Rust CLI (`clients/rust`) |
@@ -125,7 +132,9 @@ Responses always use the English names. Human-readable messages (errors, warning
 ```text
 opendecision/
   vocabulary.py    canonical actions, scenarios and state format, with Portuguese aliases
-  scenarios.py     data and model locations of each built-in scenario
+  scenarios.py     loads configs/<scenario>.toml: data, model parameters, tuning grid, policy
+  policy.py        decision policy: rules, per-action thresholds, risk, cost-based calibration
+  tuning.py        hyperparameter search and policy calibration, written back to the config
   i18n.py          English and Portuguese messages
   progress.py      job progress: terminal bars and jobs/<id>.json for the CLI and dashboard
   model.py         training and inference (TF-IDF + logistic regression)
@@ -137,6 +146,7 @@ opendecision/
   flights.py       rule-based flight offer filter and ranker
   cli.py           command line entry point
 clients/rust/      Rust client for the REST API
+configs/           one TOML file per scenario
 data/              bundled synthetic examples (external data goes to data/external/, git-ignored)
 docs/              detailed documentation
 scripts/           one-off data tools (SGD translation)
@@ -146,6 +156,7 @@ tests/             unit tests (python -m unittest discover -s tests)
 ## Documentation
 
 - [Generic agent model on Schema-Guided Dialogue](docs/sgd-model.md): data mapping, state format, results, ablation
+- [Scenario configs and decision policy](docs/policy.md): rules, thresholds, error costs, tuning
 - [Evaluation](docs/evaluation.md): what each metric means and how to choose a threshold
 - [REST API, feedback loop, languages and Rust client](docs/api.md)
 - [Tracking progress](docs/progress.md): terminal bars, `jobs --watch` and the web dashboard
@@ -163,8 +174,7 @@ tests/             unit tests (python -m unittest discover -s tests)
 ## Roadmap
 
 - [ ] One model for Portuguese and English states (multilingual embeddings or translated training data)
-- [ ] Probability calibration (`CalibratedClassifierCV`) with thresholds tuned to error costs
-- [ ] Context-dependent action masks (actions allowed per state)
+- [x] Thresholds tuned to error costs and rules that mask actions per state ([docs/policy.md](docs/policy.md))
 - [ ] Learning from outcomes (contextual bandits) once enough feedback is logged
 
 ## License and data
