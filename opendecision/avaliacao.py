@@ -14,7 +14,9 @@ from .modelo import novo_modelo
 LIMIARES = (0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
 
 
-def avaliar(dados: Path, teste: Path | None = None, fracao_final: float | None = None) -> dict:
+def avaliar(
+    dados: Path, teste: Path | None = None, fracao_final: float | None = None, min_df: int = 1,
+) -> dict:
     """Avalia por validação cruzada, por um CSV de teste separado ou pelos exemplos mais recentes.
 
     ``fracao_final`` usa as últimas linhas do CSV como teste, sem embaralhar: com dados
@@ -25,20 +27,20 @@ def avaliar(dados: Path, teste: Path | None = None, fracao_final: float | None =
         raise ValueError("Use --teste ou --fracao-final, não os dois.")
     if teste is not None:
         teste_x, teste_y = carregar_exemplos(teste)
-        return _avaliar_divisao(estados, acoes, teste_x, teste_y, f"teste separado: {teste}")
+        return _avaliar_divisao(estados, acoes, teste_x, teste_y, f"teste separado: {teste}", min_df)
     if fracao_final is not None:
         if not 0 < fracao_final < 1:
             raise ValueError("A fração final precisa estar entre 0 e 1.")
         corte = len(estados) - max(1, round(len(estados) * fracao_final))
         return _avaliar_divisao(
             estados[:corte], acoes[:corte], estados[corte:], acoes[corte:],
-            f"últimos {len(estados) - corte} exemplos do arquivo",
+            f"últimos {len(estados) - corte} exemplos do arquivo", min_df,
         )
 
     dobras = min(5, min(Counter(acoes).values()))
     validacao = StratifiedKFold(n_splits=dobras, shuffle=True, random_state=42)
     probabilidades = cross_val_predict(
-        novo_modelo(), estados, acoes, cv=validacao, method="predict_proba"
+        novo_modelo(min_df), estados, acoes, cv=validacao, method="predict_proba"
     )
     classes = sorted(set(acoes))
     majoritaria = Counter(acoes).most_common(1)[0][0]
@@ -48,10 +50,10 @@ def avaliar(dados: Path, teste: Path | None = None, fracao_final: float | None =
     }
 
 
-def _avaliar_divisao(treino_x, treino_y, teste_x, teste_y, metodo: str) -> dict:
+def _avaliar_divisao(treino_x, treino_y, teste_x, teste_y, metodo: str, min_df: int) -> dict:
     if len(set(treino_y)) < 2:
         raise ValueError("O treino precisa de pelo menos duas ações.")
-    modelo = novo_modelo().fit(treino_x, treino_y)
+    modelo = novo_modelo(min_df).fit(treino_x, treino_y)
     probabilidades = modelo.predict_proba(teste_x)
     majoritaria = Counter(treino_y).most_common(1)[0][0]
     resultado = {"metodo": metodo, "exemplos_de_treino": len(treino_x)}
@@ -68,7 +70,7 @@ def metricas(reais, probabilidades, classes: list[str], majoritaria: str) -> dic
     previstas = np.asarray(classes)[probabilidades.argmax(axis=1)]
     confianca = probabilidades.max(axis=1)
     acertos = previstas == reais
-    rotulos = sorted(set(classes) | set(reais))
+    rotulos = sorted(str(r) for r in set(classes) | set(reais))
 
     precisao, revocacao, f1, suporte = precision_recall_fscore_support(
         reais, previstas, labels=rotulos, zero_division=0

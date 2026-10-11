@@ -5,3 +5,4 @@ clients/rust/target/
 hf/
 registros/
 dados/rotulados_*.csv
+dados/externos/

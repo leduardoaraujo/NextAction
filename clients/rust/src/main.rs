@@ -15,6 +15,8 @@ struct ActionResponse {
     proxima_acao: String,
     probabilidades_estimadas: BTreeMap<String, f64>,
     pedir_revisao: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    decisao_id: Option<String>,
 }
 
 #[derive(Deserialize, Serialize)]
