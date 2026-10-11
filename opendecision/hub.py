@@ -11,6 +11,7 @@ from .i18n import LocalizedError
 from .model import fit
 from .policy import evaluate_policy
 from .scenarios import Scenario, get_scenario
+from .vocabulary import ACTION_DESCRIPTIONS
 
 MODEL_FILE = "model.skops"
 DATA_FILE = "training_data.csv"
@@ -36,6 +37,7 @@ def export(name: str, destination: Path, repo: str | None = None, license_id: st
         shutil.copyfile(scenario.data, destination / DATA_FILE)
     # The scenario config carries the decision policy the card documents.
     shutil.copyfile(scenario.config_path, destination / CONFIG_FILE)
+    report["model_bytes"] = (destination / MODEL_FILE).stat().st_size
     card = model_card(
         scenario, list(model.classes_), report,
         repo or f"<user>/opendecision-{scenario.name}", license_id or scenario.license,
@@ -63,14 +65,36 @@ def train_and_evaluate(scenario: Scenario):
 
 
 def model_card(scenario: Scenario, actions: list[str], report: dict, repo: str, license_id: str | None) -> str:
-    metadata = [f"language: [{', '.join(scenario.languages)}]", "library_name: sklearn",
-                "pipeline_tag: text-classification"]
+    name = repo.split("/")[-1]
+    languages = " or ".join(LANGUAGE_NAMES[code] for code in scenario.languages)
+    macro_f1 = round(sum(m["f1"] for m in report["per_action"].values()) / len(report["per_action"]), 3)
+    split = "test" if scenario.test else "cross-validation"
+    dataset_type = scenario.dataset_id or f"opendecision/{scenario.name}"
+    metadata = [f"language: [{', '.join(scenario.languages)}]"]
     if license_id:
         metadata.append(f"license: {license_id}")
-    metadata += ["tags:", "- sklearn", "- skops", "- text-classification", "- agents"]
-    action_list = "\n".join(f"- `{action}`" for action in actions)
+    metadata += ["library_name: sklearn", "pipeline_tag: text-classification"]
+    if scenario.dataset_id:
+        metadata += ["datasets:", f"- {scenario.dataset_id}"]
+    metadata += [
+        "metrics: [accuracy, f1]",
+        "tags: [sklearn, skops, text-classification, agents, decision-making, dialogue-policy]",
+        "model-index:",
+        f"- name: {name}",
+        "  results:",
+        "  - task:",
+        "      type: text-classification",
+        "      name: Next-action prediction",
+        "    dataset:",
+        f"      name: {scenario.dataset_name or scenario.name}",
+        f"      type: {dataset_type}",
+        f"      split: {split}",
+        "    metrics:",
+        f"    - {{type: accuracy, value: {report['accuracy']}, name: Accuracy}}",
+        f"    - {{type: f1, value: {macro_f1}, name: Macro F1}}",
+    ]
     example = json.dumps(scenario.example, ensure_ascii=False)
-    languages = " or ".join(LANGUAGE_NAMES[code] for code in scenario.languages)
+    action_rows = "\n".join(f"| `{a}` | {ACTION_DESCRIPTIONS.get(a, '')} |" for a in actions)
     per_action = "\n".join(
         f"| `{action}` | {m['precision']} | {m['recall']} | {m['f1']} | {m['support']} |"
         for action, m in report["per_action"].items()
@@ -81,77 +105,166 @@ def model_card(scenario: Scenario, actions: list[str], report: dict, repo: str, 
         for row in report["thresholds"]
     )
     shipped = (
-        f"`{DATA_FILE}` is included with the model." if scenario.ship_data
-        else "The training data is not redistributed here; use the original source."
+        f"`{DATA_FILE}` is included in this repository." if scenario.ship_data
+        else "The training data is not redistributed here; download it from the original source."
     )
     warning = f"\n\n> {report['warning']}" if "warning" in report else ""
-    policy_section = policy_card(scenario, actions, report.get("policy"), repo)
+    params = scenario.params
+    if scenario.input_format == "tagged":
+        input_section = """## Input format
+
+The state is the dialogue state followed by the last turns, separated by ` || `:
+
+```text
+[intent <ActiveIntent>] [filled <slots>] [missing <slots>] [requested <slots>] || user: <text> || assistant: <text> || user: <text>
+```
+
+| Tag | Content |
+| --- | --- |
+| `intent` | the user's active intent, e.g. `SearchOnewayFlight` |
+| `filled` | slots the user already provided (names only, no values) |
+| `missing` | required slots of the intent that are still empty |
+| `requested` | slots the user asked about |
+
+Use `none` for empty tags. Knowing which required slots are `missing` is the strongest signal:
+without the tags, accuracy drops from 0.90 to 0.77. Portuguese tags (`[intencao] [preenchidos]
+[faltando] [pedidos]`, `usuario:`) are accepted by `opendecision.vocabulary.normalize_state`,
+which the OpenDecision package applies before predicting."""
+    else:
+        input_section = f"""## Input format
+
+A free-text description of the current situation in {languages}, for example {example}."""
+    data_citation = (
+        "\n\nTraining data:\n\n```bibtex\n" + scenario.citation + "\n```" if scenario.citation else ""
+    )
+    risk_data = (
+        "The training conversations were written by crowd workers from simulated outlines in 20 service "
+        "domains, so real users will be messier and other domains less accurate."
+        if scenario.input_format == "tagged" else
+        "The training data is small and synthetic; treat this model as a demonstration of the pipeline, "
+        "not as a production model."
+    )
+    size_mb = report.get("model_bytes", 0) / 1e6
     return f"""---
 {chr(10).join(metadata)}
 ---
 
 # OpenDecision: {scenario.name}
 
-Text classifier that predicts **{scenario.decision}**.
+A small, auditable classifier that predicts **{scenario.decision}**. Given the current state, it returns
+one action from a fixed vocabulary with a probability for each, so an agent can act alone when it is
+confident and hand the decision to a person when it is not. It ships with a decision policy
+(`{CONFIG_FILE}`) that blocks impossible actions and sets a minimum confidence per action.
 
-Input: a description of the current state in {languages}. Output: one of the actions below, with estimated probabilities.
+## Model details
 
-{action_list}
+| | |
+| --- | --- |
+| Developed by | [Luiz Araujo](https://github.com/leduardoaraujo) |
+| Model type | TF-IDF features + multinomial logistic regression (scikit-learn) |
+| Task | next-action prediction for task-oriented agents (text classification) |
+| Language | {languages} |
+| License | {license_id or "not specified"} |
+| Size | {size_mb:.1f} MB |
+| Code | [github.com/leduardoaraujo/OpenDecision](https://github.com/leduardoaraujo/OpenDecision) |
 
-The model only **suggests** an action. The application that executes it must check the
-required conditions and ask for human review when confidence is low.
+## Uses
 
-## Usage
+**Direct use.** Decide the next step of a conversational agent (ask, search, present options, confirm,
+execute, end the conversation), route uncertain decisions to human review, and log decisions with
+feedback to collect training data.
+
+**Out of scope.** Executing irreversible actions (payments, bookings) from a prediction alone, domains
+far from the training data without re-evaluating, and any use as a source of facts: the model chooses
+an action, it does not generate or verify content.
+
+## How to get started
 
 ```python
 from huggingface_hub import hf_hub_download
 import skops.io as sio
 
-path = hf_hub_download("{repo}", "{MODEL_FILE}")
-model = sio.load(path)  # the file needs no types outside skops' trusted list
+model = sio.load(hf_hub_download("{repo}", "{MODEL_FILE}"))  # no types outside skops' trusted list
 
 state = {example}
 probabilities = dict(zip(model.classes_, model.predict_proba([state])[0]))
 print(max(probabilities, key=probabilities.get), probabilities)
 ```
 
-Dependencies: `scikit-learn`, `skops` and `huggingface_hub`. Use a scikit-learn version
-compatible with the training one to avoid version warnings.
+Dependencies: `scikit-learn`, `skops` and `huggingface_hub`. Use a scikit-learn version compatible with
+the training one. The full toolkit (CLI, REST API, decision log, evaluation, policy) is in the
+[OpenDecision repository](https://github.com/leduardoaraujo/OpenDecision).
 
-## Architecture
+{input_section}
 
-scikit-learn pipeline: `TfidfVectorizer(ngram_range={scenario.params.ngram_range}, strip_accents="unicode", min_df={scenario.params.min_df})` followed by
-`LogisticRegression(C={scenario.params.C}, class_weight={scenario.params.class_weight!r}, max_iter={scenario.params.max_iter})`
-(calibration: {scenario.params.calibration}). Training, evaluation and API code: [OpenDecision](https://github.com/leduardoaraujo/OpenDecision).
+## Actions
 
-## Training data
+| Action | Meaning |
+| --- | --- |
+{action_rows}
 
-{report["train_examples"]} {scenario.data_source}. {shipped}
+## Training details
+
+**Data.** {report["train_examples"]} {scenario.data_source}. {shipped}
+
+**Preprocessing.** States are normalized to the English tag format, then vectorized with TF-IDF over
+word unigrams and bigrams with accents stripped.
+
+| Hyperparameter | Value |
+| --- | --- |
+| `ngram_range` | {params.ngram_range} |
+| `min_df` | {params.min_df} |
+| `C` | {params.C} |
+| `class_weight` | {params.class_weight} |
+| `max_iter` | {params.max_iter} |
+| calibration | {params.calibration} |
+
+The solver is L-BFGS, run in warm-started chunks so training progress can be reported. Hyperparameters
+live in `{CONFIG_FILE}` and can be searched with `opendecision tune`.
 
 ## Evaluation
 
-Method: {report["method"]}, with {report["evaluated_examples"]} examples evaluated.
-Accuracy **{report["accuracy"]}**; always choosing the most frequent action would give {report["majority_baseline_accuracy"]}.
-Expected calibration error: {report["expected_calibration_error"]}.{warning}
+**Method.** {report["method"]}, with {report["evaluated_examples"]} examples evaluated.
+
+**Results.** Accuracy **{report["accuracy"]}** and macro F1 **{macro_f1}**; always choosing the most
+frequent action would give {report["majority_baseline_accuracy"]}. Expected calibration error:
+{report["expected_calibration_error"]}.{warning}
 
 | Action | Precision | Recall | F1 | Support |
 | --- | --- | --- | --- | --- |
 {per_action}
 
-Review threshold: decisions with confidence below it go to a person.
+**Review thresholds.** Decisions with confidence below the threshold go to a person:
 
 | Threshold | Decisions automated | Accuracy on automated |
 | --- | --- | --- |
 {thresholds}
 
-{policy_section}
+{policy_card(scenario, actions, report.get("policy"), repo)}
 
-## Limitations
+## Bias, risks and limitations
 
-- The model matches word patterns; it does not understand business rules or verify facts.
-- Logistic regression probabilities are not calibrated.
-- The action set is fixed.
-- Do not execute irreversible actions (for example, purchases) from a prediction without explicit confirmation.
+- The model matches word patterns. It does not understand business rules or verify facts, so the calling
+  application must check preconditions before acting.
+- Logistic regression probabilities are not calibrated; pick thresholds from the tables above, and
+  re-evaluate on your own traffic before automating.
+- {risk_data}
+- The action vocabulary is fixed; new actions require new labeled data.
+
+## Citation
+
+```bibtex
+@software{{araujo2026opendecision,
+  author = {{Araujo, Luiz}},
+  title  = {{OpenDecision: a small, auditable next-action model for AI agents}},
+  year   = {{2026}},
+  url    = {{https://github.com/leduardoaraujo/OpenDecision}}
+}}
+```{data_citation}
+
+## Model card contact
+
+Open an issue in the [OpenDecision repository](https://github.com/leduardoaraujo/OpenDecision/issues).
 """
 
 
