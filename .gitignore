@@ -6,3 +6,5 @@ hf/
 registros/
 dados/rotulados_*.csv
 dados/externos/
+*.egg-info/
+build/
