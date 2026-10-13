@@ -1,0 +1,80 @@
+# Documentation site, published to GitHub Pages by .github/workflows/pages.yml.
+# Build locally: python scripts/build_site.py && mkdocs serve
+
+site_name: NextAction
+site_description: A small, auditable next-action model for AI agents, in English and Portuguese.
+site_url: https://leduardoaraujo.github.io/NextAction/
+repo_url: https://github.com/leduardoaraujo/NextAction
+repo_name: leduardoaraujo/NextAction
+edit_uri: ""
+docs_dir: site_src
+site_dir: site
+
+theme:
+  name: material
+  icon:
+    logo: material/source-branch
+    repo: fontawesome/brands/github
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - search.highlight
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+nav:
+  - Home: index.md
+  - Português: pt-BR.md
+  - Demos:
+      - Pac-Man:
+          - Overview: demos/pacman/README.md
+          - Results: demos/pacman/RESULTS.md
+          - Error analysis: demos/pacman/ANALYSIS.md
+      - Connect Four:
+          - Overview: demos/connect4/README.md
+          - Results: demos/connect4/RESULTS.md
+      - Doom: demos/doom/README.md
+      - AI orchestrator:
+          - Overview: demos/orchestrator/README.md
+          - Results: demos/orchestrator/RESULTS.md
+          - Analysis: demos/orchestrator/ANALYSIS.md
+      - Image detection: docs/scenarios/images.md
+  - Guides:
+      - Agent model on SGD: docs/sgd-model.md
+      - Decision policy: docs/policy.md
+      - Evaluation: docs/evaluation.md
+      - REST API: docs/api.md
+      - Tracking progress: docs/progress.md
+      - Bilingual model and outcomes: docs/outcomes.md
+      - Publishing to Hugging Face: docs/hugging-face.md
+      - Flight booking scenario: docs/scenarios/flights.md
+  - Tests: docs/testing.md

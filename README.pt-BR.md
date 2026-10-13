@@ -2,7 +2,7 @@
 
 > Antes se chamava OpenDecision. Mudou para NextAction para não ser confundido com outro projeto de mesmo nome.
 
-*Read in English: [README.md](README.md)* · Modelos no Hugging Face: [nextaction-agent](https://huggingface.co/ludolua/nextaction-agent), [nextaction-flights](https://huggingface.co/ludolua/nextaction-flights), [nextaction-pacman](https://huggingface.co/ludolua/nextaction-pacman), [nextaction-connect4](https://huggingface.co/ludolua/nextaction-connect4)
+*Read in English: [README.md](README.md)* · **[Site com a documentação](https://leduardoaraujo.github.io/NextAction/)** · Modelos no Hugging Face: [nextaction-agent](https://huggingface.co/ludolua/nextaction-agent), [nextaction-flights](https://huggingface.co/ludolua/nextaction-flights), [nextaction-pacman](https://huggingface.co/ludolua/nextaction-pacman), [nextaction-connect4](https://huggingface.co/ludolua/nextaction-connect4)
 
 **Um modelo pequeno e auditável que decide a próxima ação de agentes de IA.** A partir do estado atual de uma conversa, o NextAction prevê o que o agente deve fazer em seguida (perguntar, buscar, apresentar opções, confirmar, executar, encerrar). Cada previsão vem com a probabilidade de cada ação e um limiar que manda os casos incertos para revisão humana. Funciona em **inglês e português**.
 
