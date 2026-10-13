@@ -65,7 +65,7 @@ deny = ["search", "execute"]
    deny_tag = "blocked"   # [blocked up left] denies up and left
    ```
 
-3. The top action is chosen. It is automated only if its probability reaches that action's `min_confidence` (or `default_threshold`). A `threshold` sent in the request overrides every per-action value.
+3. The top action is chosen. It is automated only if its probability reaches that action's `min_confidence` (or `default_threshold`). A `threshold` sent in the request overrides every per-action value. An action with `risk = "irreversible"` is never automated: it always goes to review, whatever its confidence, and it must also set `requires_confirmation = true`.
 4. The response explains itself. For `[missing destination_airport departure_date] || user: I need a flight from Boston.`:
 
 ```json
@@ -83,6 +83,8 @@ deny = ["search", "execute"]
 ```
 
 `reasons` can contain `masked_by_rule:<id>`, `below_threshold`, `irreversible_action` and `all_actions_blocked` (every action was denied, so the rules are ignored and the case goes to review).
+
+The calling application can also send `allowed_actions` (`--allowed-actions` in the CLI). Actions outside that list are blocked with the reason `masked_by_rule:application_allowlist`. With `require_allowed_actions = true` in `[policy]`, a request without the list goes to review with `application_allowlist_required`.
 
 ## Tuning the model
 
@@ -113,5 +115,6 @@ Calibrate on data that looks like production. Calibrating the `agent` scenario o
 | Single threshold 0.7, no rules | 0.901 | 74.7% | 97.8% | 690 | — |
 | Hand-set per-action thresholds + rule | 0.905 | 69.4% | 98.2% | 516 | 0.351 |
 | Thresholds calibrated on dev + rule | 0.905 | 85.1% | 95.2% | 1,722 | **0.309** |
+| Same, with every irreversible action reviewed (current) | 0.905 | 78.0% | 94.8% | 1,701 | 0.355 |
 
-The rule alone lifts accuracy from 0.901 to 0.905 by removing impossible choices. Calibration then trades more unreviewed low-cost mistakes for far fewer reviews, which lowers the total cost by 12% under the configured costs. If unreviewed errors are worse for your product than these costs say, raise `unreviewed_error_cost` and calibrate again.
+The rule alone lifts accuracy from 0.901 to 0.905 by removing impossible choices. Calibration then trades more unreviewed low-cost mistakes for far fewer reviews, which lowers the total cost by 12% under the configured costs. Sending every `execute` to review costs 0.046 more per decision under these costs, which do not count the harm of an unwanted booking or payment; the project accepts that price. If unreviewed errors are worse for your product than these costs say, raise `unreviewed_error_cost` and calibrate again.

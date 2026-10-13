@@ -79,6 +79,7 @@ class Policy:
     review_cost: float = 1.0
     actions: dict[str, ActionPolicy] = field(default_factory=dict)
     rules: tuple[Rule, ...] = ()
+    require_allowed_actions: bool = False
 
     def for_action(self, action: str) -> ActionPolicy:
         return self.actions.get(action, ActionPolicy())
@@ -111,29 +112,38 @@ def parse_state(state: str) -> ParsedState | None:
                        {name: values(name) for name in tags})
 
 
-def apply(probabilities: dict[str, float], state: str, policy: Policy, threshold: float | None = None) -> dict:
+def apply(probabilities: dict[str, float], state: str, policy: Policy, threshold: float | None = None,
+          allowed_actions: set[str] | None = None) -> dict:
     """Apply rules, thresholds and risk to the model's probabilities.
 
     ``threshold`` overrides the per-action thresholds, for callers that ask for one explicitly.
     """
     parsed = parse_state(state)
     denials = {rule.id: rule.denied(parsed) & set(probabilities) for rule in policy.rules}
+    if allowed_actions is not None:
+        denials["application_allowlist"] = set(probabilities) - allowed_actions
     blocked = sorted(set().union(*denials.values()))
     reasons = [f"masked_by_rule:{rule_id}" for rule_id, actions in denials.items() if actions]
 
     allowed = {action: p for action, p in probabilities.items() if action not in blocked}
-    if not allowed or sum(allowed.values()) == 0:
-        allowed, blocked, reasons = dict(probabilities), [], reasons + ["all_actions_blocked"]
+    no_allowed_action = not allowed or sum(allowed.values()) == 0
+    if no_allowed_action:
+        allowed, reasons = dict(probabilities), reasons + ["all_actions_blocked"]
     total = sum(allowed.values())
     distribution = {action: round(p / total, 4) for action, p in allowed.items()}
 
     action = max(distribution, key=distribution.get)
     settings = policy.for_action(action)
     limit = policy.threshold(action) if threshold is None else threshold
-    needs_review = distribution[action] < limit or "all_actions_blocked" in reasons
+    missing_allowlist = policy.require_allowed_actions and allowed_actions is None
+    irreversible = settings.risk == "irreversible"
+    needs_review = (distribution[action] < limit or no_allowed_action or missing_allowlist
+                    or irreversible)
     if distribution[action] < limit:
         reasons.append("below_threshold")
-    if settings.risk == "irreversible":
+    if missing_allowlist:
+        reasons.append("application_allowlist_required")
+    if irreversible:
         reasons.append("irreversible_action")
     return {
         "action": action,
@@ -215,6 +225,8 @@ def from_dict(data: dict) -> Policy:
             unreviewed_error_cost=float(settings.get("unreviewed_error_cost", 1.0)),
             requires_confirmation=bool(settings.get("requires_confirmation", False)),
         )
+        if risk == "irreversible" and not actions[name].requires_confirmation:
+            raise ValueError(f"Irreversible action {name} must require confirmation")
     rules = tuple(
         Rule(
             id=rule["id"], deny=tuple(rule.get("deny", ())), deny_tag=rule.get("deny_tag"),
@@ -229,4 +241,5 @@ def from_dict(data: dict) -> Policy:
         default_threshold=float(data.get("default_threshold", 0.7)),
         review_cost=float(data.get("review_cost", 1.0)),
         actions=actions, rules=rules,
+        require_allowed_actions=bool(data.get("require_allowed_actions", False)),
     )

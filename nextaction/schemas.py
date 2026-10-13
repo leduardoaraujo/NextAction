@@ -23,6 +23,8 @@ class ActionRequest(StrictModel):
     scenario: ScenarioName = field("scenario", "cenario")
     state: str = field("state", "estado", min_length=1)
     threshold: float | None = field("threshold", "limiar", default=None, ge=0, le=1)
+    allowed_actions: list[Annotated[str, AfterValidator(normalize_action)]] | None = field(
+        "allowed_actions", "acoes_permitidas", default=None)
 
 
 class ActionResponse(StrictModel):

@@ -43,26 +43,31 @@ class PolicyTest(unittest.TestCase):
         self.assertEqual(decision["probabilities"], {"ask": 1.0})
         self.assertIn("masked_by_rule:no_execute_with_missing", decision["reasons"])
 
-    def test_irreversible_action_needs_high_confidence_and_confirmation(self):
+    def test_irreversible_action_always_needs_review_and_confirmation(self):
         confident = apply({"execute": 0.97, "ask": 0.03}, COMPLETE, POLICY)
         unsure = apply({"execute": 0.9, "ask": 0.1}, COMPLETE, POLICY)
-        self.assertFalse(confident["needs_review"])
+        self.assertTrue(confident["needs_review"])
         self.assertTrue(confident["requires_confirmation"])
         self.assertIn("irreversible_action", confident["reasons"])
+        self.assertNotIn("below_threshold", confident["reasons"])
         self.assertTrue(unsure["needs_review"])
         self.assertEqual(unsure["threshold"], 0.95)
+        self.assertTrue(apply({"execute": 0.9, "ask": 0.1}, COMPLETE, POLICY, threshold=0.5)["needs_review"])
 
     def test_explicit_threshold_overrides_policy(self):
-        self.assertFalse(apply({"execute": 0.9, "ask": 0.1}, COMPLETE, POLICY, threshold=0.5)["needs_review"])
+        self.assertTrue(apply({"ask": 0.55, "execute": 0.45}, COMPLETE, POLICY)["needs_review"])
+        self.assertFalse(apply({"ask": 0.55, "execute": 0.45}, COMPLETE, POLICY, threshold=0.5)["needs_review"])
 
     def test_policy_simulation_counts_cost(self):
         result = evaluate_policy(
-            [COMPLETE, COMPLETE, MISSING], ["execute", "ask", "ask"],
-            [[0.99, 0.01], [0.97, 0.03], [0.8, 0.2]], ["execute", "ask"], POLICY,
+            [COMPLETE, COMPLETE, MISSING], ["execute", "execute", "ask"],
+            [[0.99, 0.01], [0.1, 0.9], [0.8, 0.2]], ["execute", "ask"], POLICY,
         )
+        # The confident execute goes to review (cost 1); the wrong ask passes unreviewed (cost 2).
         self.assertEqual(result["unreviewed_errors"], 1)
+        self.assertEqual(result["sent_to_review"], 1)
         self.assertEqual(result["decisions_with_blocked_actions"], 1)
-        self.assertEqual(result["expected_cost_per_decision"], round(50 / 3, 4))
+        self.assertEqual(result["expected_cost_per_decision"], 1.0)
 
     def test_calibration_raises_threshold_when_errors_are_expensive(self):
         probabilities = [[0.9, 0.1]] * 5 + [[0.99, 0.01]] * 5

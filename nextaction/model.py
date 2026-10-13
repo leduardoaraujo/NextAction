@@ -90,7 +90,8 @@ def train(data: Path, destination: Path, params: ModelParams = ModelParams(), la
     }
 
 
-def decide(model_path: Path, state: str, threshold: float | None = None, policy: Policy = Policy()) -> dict:
+def decide(model_path: Path, state: str, threshold: float | None = None, policy: Policy = Policy(),
+           allowed_actions: set[str] | None = None) -> dict:
     """Predict the next action and apply the decision policy (rules, thresholds, risk)."""
     if threshold is not None and not 0 <= threshold <= 1:
         raise LocalizedError("threshold_range")
@@ -104,4 +105,4 @@ def decide(model_path: Path, state: str, threshold: float | None = None, policy:
         normalize_action(str(action)): float(probability)
         for action, probability in zip(model.classes_, probabilities)
     }
-    return {"type": "choice", **apply(distribution, state, policy, threshold)}
+    return {"type": "choice", **apply(distribution, state, policy, threshold, allowed_actions)}

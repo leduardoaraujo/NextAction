@@ -21,6 +21,7 @@ from .scenarios import ROOT, SCENARIO_ALIASES, get_scenario
 from .schemas import FlightRequest
 from .sgd import SCHEMA_ALIASES, SCHEMAS, convert
 from .vision import inspect_image
+from .vocabulary import normalize_action
 
 
 def build_parser(lang: str) -> argparse.ArgumentParser:
@@ -49,6 +50,8 @@ def build_parser(lang: str) -> argparse.ArgumentParser:
     decide_cmd.add_argument("state", help=t("cli_state", lang))
     decide_cmd.add_argument("--model", "--modelo", type=Path, help=t("cli_model", lang))
     decide_cmd.add_argument("--threshold", "--limiar", type=float, help=t("cli_threshold", lang))
+    decide_cmd.add_argument("--allowed-actions", "--acoes-permitidas", nargs="+",
+                            help="actions allowed by the calling application")
 
     evaluate_cmd = command("evaluate", "avaliar", "cli_evaluate")
     scenario_argument(evaluate_cmd)
@@ -155,7 +158,9 @@ def run(args: argparse.Namespace, lang: str) -> dict:
     if args.command == "train":
         return train(args.data or scenario.data, args.model or scenario.model, params, lang)
     if args.command == "decide":
-        return decide(args.model or scenario.model, args.state, args.threshold, scenario.policy)
+        return decide(args.model or scenario.model, args.state, args.threshold, scenario.policy,
+                      {normalize_action(action) for action in args.allowed_actions}
+                      if args.allowed_actions is not None else None)
     if args.command == "evaluate":
         data = args.data or scenario.data
         test = args.test or (scenario.test if args.data is None and args.recent_fraction is None else None)
