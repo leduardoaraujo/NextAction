@@ -23,6 +23,16 @@ def category(label: str) -> str:
     return "objects"
 
 
+def label_font(image_font, size: int):
+    """A system font with accents for Portuguese labels (sofá, pássaro), else Pillow's default."""
+    for name in ("DejaVuSans.ttf", "arial.ttf", "Arial.ttf", "Helvetica.ttc", "LiberationSans-Regular.ttf"):
+        try:
+            return image_font.truetype(name, size)
+        except OSError:
+            continue
+    return image_font.load_default(size=size)
+
+
 def inspect_image(image_path: Path, output_path: Path | None = None, threshold: float = 0.5) -> dict:
     if not 0 < threshold <= 1:
         raise ValueError("threshold must be greater than 0 and at most 1")
@@ -50,7 +60,7 @@ def inspect_image(image_path: Path, output_path: Path | None = None, threshold: 
 
     annotated = image.copy()
     draw = ImageDraw.Draw(annotated)
-    font = ImageFont.load_default(size=max(14, min(image.size) // 35))
+    font = label_font(ImageFont, size=max(14, min(image.size) // 35))
     colors = {"people": "#37c976", "animals": "#ffc247", "objects": "#60a5fa"}
     for item in detections:
         box = item["box"]
