@@ -43,8 +43,17 @@ def record_decision(path: Path, scenario: str, state: str, decision: dict) -> st
 def record_feedback(
     path: Path, decision_id: str, final_action: str,
     outcome: str | None = None, comment: str | None = None,
+    action_taken: str | None = None, reward: float | None = None,
+    propensity: float | None = None,
 ) -> dict:
     """Store the action that should have been taken; the latest feedback for a decision wins."""
+    observed = (action_taken, reward, propensity)
+    if any(value is not None for value in observed) and not all(value is not None for value in observed):
+        raise ValueError("action_taken, reward and propensity must be supplied together")
+    if reward is not None and not 0 <= reward <= 1:
+        raise ValueError("reward must be in [0, 1]")
+    if propensity is not None and not 0 < propensity <= 1:
+        raise ValueError("propensity must be in (0, 1]")
     if not any(r["type"] == "decision" and r["id"] == decision_id for r in read(path)):
         raise KeyError(decision_id)
     record = {"type": "feedback", "id": decision_id, "at": _now(), "final_action": normalize_action(final_action)}
@@ -52,6 +61,10 @@ def record_feedback(
         record["outcome"] = outcome
     if comment is not None:
         record["comment"] = comment
+    if action_taken is not None:
+        record["action_taken"] = normalize_action(action_taken)
+        record["reward"] = reward
+        record["propensity"] = propensity
     _append(path, record)
     return record
 

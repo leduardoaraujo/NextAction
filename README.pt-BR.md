@@ -25,6 +25,8 @@ Agentes com LLM raramente erram ao escrever frases. Eles erram no **controle de 
 
 O modelo genérico `agent` foi treinado com o [Schema-Guided Dialogue](https://github.com/google-research-datasets/dstc8-schema-guided-dialogue) (165 mil turnos de assistente, 20 domínios). A avaliação usa o split de teste oficial, que inclui **serviços que não aparecem no treino**.
 
+O cenário `agent_bilingual` treina um único modelo com diálogos originais em inglês e uma amostra traduzida para português. Em 2.883 turnos pareados por idioma, obteve 0,895 de acurácia em inglês e 0,837 em português; o teste em português também é traduzido. O [guia de modelo bilíngue e aprendizado com resultados](docs/outcomes.md) explica como reproduzir a avaliação e registrar ações executadas, recompensas e probabilidades reais de escolha para treinar um candidato offline. Esse candidato não substitui automaticamente o modelo servido pela API.
+
 | Entrada | Acurácia | Automáticas com limiar 0,9 | Acurácia nas automáticas |
 | --- | --- | --- | --- |
 | Conversa + estado do diálogo | **0,90** | 50,0% | **99,6%** |

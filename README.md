@@ -231,14 +231,14 @@ tests/             test suites (see Testing)
 - The model matches word patterns. It does not verify facts or enforce business rules; the calling app must check preconditions before acting.
 - Probabilities are not calibrated (expected calibration error ≈ 0.08 on SGD). Pick thresholds from the evaluation table, not from intuition.
 - SGD conversations were written by crowd workers from simulated scripts, so real users will be messier. Measure on your own logged decisions before automating.
-- The `agent` model is trained on English text; the Portuguese scenarios use small synthetic datasets for demonstration.
+- The original `agent` model is trained on English text. `agent_bilingual` adds translated Portuguese SGD training dialogues; its translated test result does not establish performance on real Portuguese users.
 - Never execute irreversible actions (payments, bookings) from a prediction alone.
 
 ## Roadmap
 
-- [ ] One model for Portuguese and English states (multilingual embeddings or translated training data)
+- [x] One model for Portuguese and English states using translated training data ([evaluation and reproduction](docs/outcomes.md))
 - [x] Thresholds tuned to error costs and rules that mask actions per state ([docs/policy.md](docs/policy.md))
-- [ ] Learning from outcomes (contextual bandits) once enough feedback is logged
+- [x] Outcome logging and an offline contextual-bandit candidate workflow ([guide](docs/outcomes.md)); production use awaits real outcome data and review
 
 ## License and data
 

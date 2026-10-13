@@ -2,7 +2,7 @@
 
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, AliasChoices, BaseModel, BeforeValidator, ConfigDict, Field
+from pydantic import AfterValidator, AliasChoices, BaseModel, BeforeValidator, ConfigDict, Field, model_validator
 
 from .scenarios import normalize_scenario
 from .vocabulary import normalize_action
@@ -46,6 +46,18 @@ class FeedbackRequest(StrictModel):
     )
     outcome: str | None = field("outcome", "resultado", default=None, max_length=500)
     comment: str | None = field("comment", "comentario", default=None, max_length=2000)
+    action_taken: Annotated[str, AfterValidator(normalize_action)] | None = field(
+        "action_taken", "acao_executada", default=None, pattern=r"^[a-z0-9_]{1,64}$"
+    )
+    reward: float | None = field("reward", "recompensa", default=None, ge=0, le=1)
+    propensity: float | None = field("propensity", "probabilidade_escolha", default=None, gt=0, le=1)
+
+    @model_validator(mode="after")
+    def complete_observation(self):
+        observed = (self.action_taken, self.reward, self.propensity)
+        if any(value is not None for value in observed) and not all(value is not None for value in observed):
+            raise ValueError("action_taken, reward and propensity must be supplied together")
+        return self
 
 
 class FeedbackResponse(StrictModel):

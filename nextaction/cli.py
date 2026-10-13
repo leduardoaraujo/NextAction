@@ -10,6 +10,7 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from .decision_log import export_labels
+from .bandit import fit_candidate, preview_candidate
 from .evaluation import evaluate
 from .flights import rank_flights
 from .hub import export
@@ -78,6 +79,20 @@ def build_parser(lang: str) -> argparse.ArgumentParser:
         "--log", "--registro", type=Path, default=ROOT / "logs" / "decisions.jsonl", help=t("cli_log", lang)
     )
     labels_cmd.add_argument("--output", "--destino", type=Path, help=t("cli_output", lang))
+
+    bandit_cmd = commands.add_parser("fit-bandit", aliases=["treinar-bandit"],
+                                     help="fit an offline outcome model for review")
+    bandit_cmd.set_defaults(command="fit-bandit")
+    scenario_argument(bandit_cmd)
+    bandit_cmd.add_argument("--log", type=Path, default=ROOT / "logs" / "decisions.jsonl")
+    bandit_cmd.add_argument("--output", type=Path)
+
+    preview_cmd = commands.add_parser("preview-bandit", aliases=["visualizar-bandit"],
+                                      help="preview a candidate outcome model")
+    preview_cmd.set_defaults(command="preview-bandit")
+    scenario_argument(preview_cmd)
+    preview_cmd.add_argument("state")
+    preview_cmd.add_argument("--model", type=Path)
 
     hf_cmd = command("export-hf", "exportar-hf", "cli_export_hf")
     scenario_argument(hf_cmd)
@@ -154,6 +169,12 @@ def run(args: argparse.Namespace, lang: str) -> dict:
         return inspect_image(args.image, args.output, args.threshold)
 
     scenario = get_scenario(args.scenario)
+    if args.command == "fit-bandit":
+        return fit_candidate(args.log, scenario.name,
+                             args.output or ROOT / "models" / f"{scenario.name}_bandit_candidate.joblib")
+    if args.command == "preview-bandit":
+        return preview_candidate(args.model or ROOT / "models" / f"{scenario.name}_bandit_candidate.joblib",
+                                 args.state)
     params = replace(scenario.params, min_df=args.min_df) if getattr(args, "min_df", None) else scenario.params
     if args.command == "train":
         return train(args.data or scenario.data, args.model or scenario.model, params, lang)

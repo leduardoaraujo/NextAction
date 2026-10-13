@@ -56,6 +56,7 @@ curl -s http://127.0.0.1:8000/v1/decisions/<decision_id>/feedback -H "Content-Ty
 
 - `final_action` may be an action the model does not know yet. That is how missing actions surface.
 - The log is append-only; if a decision receives several feedback entries, the last one wins.
+- To log a measured outcome for offline learning, also send `action_taken`, `reward` (0 to 1), and `propensity` (the actual selection probability, greater than 0 and at most 1) together. See [outcome learning](outcomes.md). The `final_action` correction and the observed reward have different meanings.
 - States can contain personal data. The log is git-ignored, and `NEXTACTION_LOG=""` disables it.
 
 Turn reviewed decisions into training data and evaluate on the most recent cases:
@@ -81,7 +82,7 @@ English is canonical; Portuguese is a permanent alias everywhere.
 | Endpoint | English fields | Portuguese aliases |
 | --- | --- | --- |
 | decide | `scenario`, `state`, `threshold` | `cenario`, `estado`, `limiar` |
-| feedback | `final_action`, `outcome`, `comment` | `acao_final`, `resultado`, `comentario` |
+| feedback | `final_action`, `outcome`, `comment`, `action_taken`, `reward`, `propensity` | `acao_final`, `resultado`, `comentario`, `acao_executada`, `recompensa`, `probabilidade_escolha` |
 | flights | `request`, `offers`, `selected_offer` | `pedido`, `ofertas`, `oferta_escolhida` |
 | flight request | `origin`, `destination`, `departure_date`, `return_date`, `passengers`, `max_budget`, `max_stops`, `baggage_required`, `weights` | `origem`, `destino`, `data_ida`, `data_volta`, `passageiros`, `orcamento_max`, `max_escalas`, `bagagem_obrigatoria`, `pesos` |
 | offer | `total_price`, `duration_min`, `stops`, `baggage_included` | `preco_total`, `duracao_min`, `escalas`, `bagagem_incluida` |
