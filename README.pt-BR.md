@@ -73,7 +73,7 @@ No Lig 4, o modelo imita uma busca de profundidade 4. Sozinho, vence 19% das par
 
 ## Testes
 
-São **71 testes automatizados, todos passando, com 88% de cobertura**. O CI roda a suíte no Python 3.12 e 3.13 a cada push e pull request e publica o relatório completo no resumo da execução. A lista de cada teste com resultado, tempo e cobertura por módulo está em [docs/testing.md](docs/testing.md).
+São **77 testes automatizados, todos passando, com 84% de cobertura**. O CI roda a suíte no Python 3.12 e 3.13 a cada push e pull request e publica o relatório completo no resumo da execução. A lista de cada teste com resultado, tempo e cobertura por módulo está em [docs/testing.md](docs/testing.md).
 
 Os números do modelo também são medidos, não estimados: cada resultado vem de um conjunto de teste separado e pode ser reproduzido com `nextaction evaluate agent`.
 

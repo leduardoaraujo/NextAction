@@ -151,12 +151,12 @@ Two kinds of evidence back this project: **software tests** that check every con
 
 ### Software tests
 
-**71 tests, all passing, 88% coverage** (lines and branches). CI runs them on Python 3.12 and 3.13 for every push and pull request, builds the Rust client, and publishes the full report in each run's summary on the [Actions tab](https://github.com/leduardoaraujo/NextAction/actions/workflows/ci.yml).
+**77 tests, all passing, 84% coverage** (lines and branches). CI runs them on Python 3.12 and 3.13 for every push and pull request, builds the Rust client, and publishes the full report in each run's summary on the [Actions tab](https://github.com/leduardoaraujo/NextAction/actions/workflows/ci.yml).
 
 | Suite | Tests | What it verifies |
 | --- | --- | --- |
 | [`test_api`](tests/test_api.py) | 12 | REST contracts in English and with Portuguese fields, feedback loop, localized errors, flight ranking |
-| [`test_policy`](tests/test_policy.py) | 10 | rule masking, per-action thresholds, irreversible actions, cost-based calibration, tuning written back to TOML |
+| [`test_policy`](tests/test_policy.py) | 10 | rule masking, per-action thresholds, irreversible actions always reviewed, cost-based calibration, tuning written back to TOML |
 | [`test_pacman_demo`](tests/test_pacman_demo.py) | 5 | deterministic games, walls and scoring, state tags, `deny_tag` rules, the Pac-Man config |
 | [`test_connect4_demo`](tests/test_connect4_demo.py) | 5 | win detection, search takes wins and blocks threats, alpha-beta equals minimax, blocked and gifted columns |
 | [`test_flights`](tests/test_flights.py) | 7 | rule-based offer filtering and ranking, validation errors in both languages |
@@ -167,6 +167,8 @@ Two kinds of evidence back this project: **software tests** that check every con
 | [`test_sgd`](tests/test_sgd.py) | 4 | SGD act mapping, missing-slot state, flights schema |
 | [`test_decision_log`](tests/test_decision_log.py) | 2 | append-only log, latest feedback wins, label export |
 | [`test_hub`](tests/test_hub.py) | 2 | skops export loads safely, model card metadata |
+| [`test_orchestrator_demo`](tests/test_orchestrator_demo.py) | 4 | synthetic orchestration data, policy and benchmark contracts |
+| [`test_bandit`](tests/test_bandit.py) | 2 | outcome feedback needs action, reward and propensity; the bandit candidate stays out of serving |
 
 Every test with its result and duration, and coverage per module, are in **[docs/testing.md](docs/testing.md)**. To reproduce:
 
@@ -223,6 +225,7 @@ tests/             test suites (see Testing)
 - [Test report](docs/testing.md): every test with its result, duration and coverage per module
 - [REST API, feedback loop, languages and Rust client](docs/api.md)
 - [Tracking progress](docs/progress.md): terminal bars, `jobs --watch` and the web dashboard
+- [Bilingual model and outcome learning](docs/outcomes.md)
 - [Publishing to Hugging Face](docs/hugging-face.md)
 - [Flight booking scenario](docs/scenarios/flights.md)
 
