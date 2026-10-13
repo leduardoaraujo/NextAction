@@ -38,6 +38,42 @@ theme:
     - content.code.copy
     - search.highlight
 
+plugins:
+  - search
+  - i18n:
+      docs_structure: suffix   # page.md is English, page.pt.md is Portuguese
+      fallback_to_default: true
+      reconfigure_material: true
+      languages:
+        - locale: en
+          name: English
+          default: true
+          build: true
+        - locale: pt
+          name: Português
+          build: true
+          site_description: Um modelo pequeno e auditável de próxima ação para agentes de IA, em inglês e português.
+          nav_translations:
+            Home: Início
+            Demos: Demos
+            Overview: Visão geral
+            Results: Resultados
+            Error analysis: Análise de erros
+            Analysis: Análise
+            Connect Four: Lig 4
+            AI orchestrator: Orquestrador de IA
+            Image detection: Detecção em imagens
+            Guides: Guias
+            Agent model on SGD: Modelo de agente no SGD
+            Decision policy: Política de decisão
+            Evaluation: Avaliação
+            REST API: API REST
+            Tracking progress: Acompanhar o progresso
+            Bilingual model and outcomes: Modelo bilíngue e resultados
+            Publishing to Hugging Face: Publicar no Hugging Face
+            Flight booking scenario: Cenário de passagens aéreas
+            Tests: Testes
+
 markdown_extensions:
   - admonition
   - attr_list
@@ -53,7 +89,6 @@ markdown_extensions:
 
 nav:
   - Home: index.md
-  - Português: pt-BR.md
   - Demos:
       - Pac-Man:
           - Overview: demos/pacman/README.md
