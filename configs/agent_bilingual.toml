@@ -1,0 +1,99 @@
+# One English/Portuguese next-action model trained on original and translated SGD.
+
+[scenario]
+name = "agent_bilingual"
+alias = "agente_bilingue"
+languages = ["en", "pt"]
+data = "data/external/sgd_bilingual_train.csv"
+test = "data/external/sgd_pt_test.csv"
+model = "models/agent_bilingual.joblib"
+license = "cc-by-sa-4.0"
+ship_data = false
+input = "tagged"      # dialogue-state tags followed by the recent turns
+dataset_id = "google-research-datasets/schema_guided_dstc8"
+dataset_name = "Schema-Guided Dialogue with a translated Portuguese training sample"
+citation = """@inproceedings{rastogi2020schema,
+  title     = {Towards Scalable Multi-domain Conversational Agents: The Schema-Guided Dialogue Dataset},
+  author    = {Rastogi, Abhinav and Zang, Xiaoxue and Sunkara, Srinivas and Gupta, Raghav and Khaitan, Pranav},
+  booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume    = {34},
+  number    = {05},
+  pages     = {8689--8696},
+  year      = {2020}
+}"""
+decision = "what an English- or Portuguese-speaking assistant should do next"
+example = "[intent SearchOnewayFlight] [filled destination_airport origin_airport] [missing departure_date] [requested none] || user: I need a one way flight from New York to Seattle."
+data_source = "English assistant turns from SGD plus a machine-translated Portuguese sample of its train split; build with scripts/build_bilingual_sgd.py"
+
+[model]
+ngram_range = [1, 2]
+min_df = 5            # drop terms seen in fewer than 5 turns: 178k -> 54k terms, same accuracy
+C = 1.0               # inverse regularization strength
+class_weight = "none" # or "balanced" to up-weight rare actions
+max_iter = 1000
+calibration = "none"  # "sigmoid" or "isotonic" wraps the model in CalibratedClassifierCV
+
+[tuning]
+sample = 40000        # stratified subsample used for the grid search on this large dataset
+folds = 3
+metric = "f1_macro"
+C = [0.3, 1.0, 3.0]
+min_df = [2, 5]
+ngram_range = [[1, 1], [1, 2]]
+class_weight = ["none", "balanced"]
+
+# Require review until thresholds are tuned on representative bilingual dev data.
+[policy]
+default_threshold = 1.0
+review_cost = 1.0     # cost of sending one decision to a person, the unit for the costs below
+
+[policy.actions.ask]
+risk = "low"
+unreviewed_error_cost = 2
+min_confidence = 1.0
+
+[policy.actions.answer]
+risk = "low"
+unreviewed_error_cost = 2
+min_confidence = 1.0
+
+[policy.actions.search]
+risk = "low"
+unreviewed_error_cost = 3
+min_confidence = 1.0
+
+[policy.actions.present_options]
+risk = "low"
+unreviewed_error_cost = 3
+min_confidence = 1.0
+
+[policy.actions.suggest_next_step]
+risk = "low"
+unreviewed_error_cost = 3
+min_confidence = 1.0
+
+[policy.actions.offer_more_help]
+risk = "low"
+unreviewed_error_cost = 2
+min_confidence = 1.0
+
+[policy.actions.end_conversation]
+risk = "medium"
+min_confidence = 1.0
+unreviewed_error_cost = 8
+
+[policy.actions.confirm]
+risk = "medium"
+min_confidence = 1.0
+unreviewed_error_cost = 10
+
+[policy.actions.execute]
+risk = "irreversible"           # bookings, payments, transfers
+min_confidence = 1.0
+unreviewed_error_cost = 50
+requires_confirmation = true    # always confirm with the user, even when confident
+
+[[policy.rules]]
+id = "no_search_or_execute_with_missing_fields"
+when_missing_any = true
+deny = ["search", "execute"]
